@@ -1,4 +1,5 @@
 const express = require("express");
+const userRoutes = require("./Routes/Tharusha/UserRoutes");
 
 const app = express();
 
@@ -6,8 +7,6 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use("/", (req, res) => {
-  res.send("Backend is working!");
-});
+app.use("/users", userRoutes);
 
 module.exports = app;
