@@ -1,13 +1,13 @@
-const express = require("express");
+// const express = require("express");
 
-const app = express();
+// const app = express();
 
-// Middleware
-app.use(express.json());
+// // Middleware
+// app.use(express.json());
 
-// Routes
-app.use("/", (req, res) => {
-  res.send("Backend is working!");
-});
+// // Routes
+// app.use("/", (req, res) => {
+//   res.send("Backend is working!");
+// });
 
-module.exports = app;
+// module.exports = app;
