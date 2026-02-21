@@ -67,16 +67,4 @@ router.route('/:id')
 
 router.get('/:id/history', vaccineController.getVaccineHistory);
 
-// Dose requirement routes (nested under vaccines)
-router.route('/:vaccineId/doses')
-  .get(vaccineController.getVaccineDoses)
-  .post(validateDose, vaccineController.createDose);
-
-// Standalone dose routes
-router.route('/doses/:id')
-  .put(validateDose, vaccineController.updateDose)
-  .delete(vaccineController.deleteDose);
-
-router.post('/doses/calculate', vaccineController.calculateDueDate);
-
 module.exports = router;
