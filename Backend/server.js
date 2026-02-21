@@ -12,7 +12,7 @@ if (!MONGO_URI) {
 
 // Connect to MongoDB and start server
 mongoose
-  .connect(MONGO_URI) //Database
+  .connect(MONGO_URI) 
   .then(() => {
     console.log("✓ Connected to MongoDB");
     app.listen(PORT, () => {
