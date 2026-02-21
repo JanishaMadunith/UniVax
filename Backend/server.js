@@ -20,6 +20,6 @@ mongoose
     });
   })
   .catch((err) => {
-    console.error("✗ Database connection failed:", err.message);
+    console.error("✗ Database c  onnection failed:", err.message);
     process.exit(1);
   });
