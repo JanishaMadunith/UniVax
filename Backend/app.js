@@ -9,6 +9,7 @@ app.use(express.json());
 
 // Routes
 app.use("/users", userRoutes);
+app.use('/api/immunization-logs', immunizationLogRoutes);
 app.use("/appointments", appointmentRoutes);
 
 module.exports = app;
