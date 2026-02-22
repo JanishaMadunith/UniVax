@@ -1,5 +1,5 @@
-const ImmunizationLog = require('../models/immunizationLog.model');
-const axios = require('axios');  // For third-party API
+const ImmunizationLog = require("../../Model/Sajith/immunizationLog.model");
+//const axios = require('axios');  // For third-party API
 
 class ImmunizationLogService {
   async createLog(data) {

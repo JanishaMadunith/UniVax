@@ -1,6 +1,7 @@
 const express = require("express");
 const userRoutes = require("./Routes/Tharusha/UserRoutes");
 const appointmentRoutes = require("./Routes/Janeesha/AppointmentRoutes");
+const immunizationLogRoutes = require("./Routes/Sajith/immunizationLog.routes");
 
 const app = express();
 
