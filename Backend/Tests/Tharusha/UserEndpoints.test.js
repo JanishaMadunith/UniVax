@@ -15,13 +15,13 @@ describe('User Endpoints Integration Testing', () => {
             const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/univax-test';
             await mongoose.connect(MONGO_URI);
         }
-        // Clear existing test users before starting
-        await User.deleteMany({ email: { $in: ['test@test.com', 'newuser@test.com', 'update@test.com'] } });
+        // Clear existing test users before starting (cleanup old test data)
+        await User.deleteMany({ email: /test\.com|@test\.|bulk|load|mass|perf|security|rapid|concurrent|timestamp|uppercase|longname|specialphone|unicode|emoji|symbols|largedata|largephone/ });
     });
 
     afterAll(async () => {
-        // Clean up after all tests
-        await User.deleteMany({ email: { $in: ['test@test.com', 'newuser@test.com', 'update@test.com'] } });
+        // Clean up ALL test users (use regex pattern to catch timestamped emails)
+        await User.deleteMany({ email: /test\.com|@test\.|bulk|load|mass|perf|security|rapid|concurrent|timestamp|uppercase|longname|specialphone|unicode|emoji|symbols|largedata|largephone/ });
         if (mongoose.connection.readyState) {
             await mongoose.connection.close();
         }
@@ -283,10 +283,10 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.message).toBe('User not found');
         });
 
-        it('Should return 500 if ID format is invalid', async () => {
+        it('Should return 400 if ID format is invalid', async () => {
             const res = await request(server).get(`${API_PREFIX}/invalidid`);
 
-            expect(res.statusCode).toBe(500);
+            expect(res.statusCode).toBe(400);
             expect(res.body.success).toBe(false);
         });
     });
@@ -322,8 +322,24 @@ describe('User Endpoints Integration Testing', () => {
         });
 
         it('Should not update password field', async () => {
+            // Create a separate user for this password protection test
+            const testUser = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Password Test User',
+                    email: `passwordtest${Date.now()}@test.com`,
+                    phone: '0775555555',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true
+                });
+
+            const passwordTestUserId = testUser.body.user.id;
+            const passwordTestEmail = testUser.body.user.email;
+
+            // Try to update password field
             const res = await request(server)
-                .put(`${API_PREFIX}/${userId}`)
+                .put(`${API_PREFIX}/${passwordTestUserId}`)
                 .send({
                     name: 'Same User',
                     password: 'newpassword123'
@@ -334,7 +350,7 @@ describe('User Endpoints Integration Testing', () => {
             const loginRes = await request(server)
                 .post(`${API_PREFIX}/login`)
                 .send({
-                    email: 'updated@test.com',
+                    email: passwordTestEmail,
                     password: 'password123'
                 });
 
@@ -394,10 +410,10 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.message).toBe('User not found');
         });
 
-        it('Should return 500 if ID format is invalid', async () => {
+        it('Should return 400 if ID format is invalid', async () => {
             const res = await request(server).delete(`${API_PREFIX}/invalidid`);
 
-            expect(res.statusCode).toBe(500);
+            expect(res.statusCode).toBe(400);
             expect(res.body.success).toBe(false);
         });
     });

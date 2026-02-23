@@ -36,7 +36,7 @@ describe('User Authentication & Security Testing', () => {
     });
 
     afterAll(async () => {
-        await User.deleteMany({ email: { $in: [validUserEmail, 'attacker@test.com', 'sql@test.com', 'xss@test.com'] } });
+        await User.deleteMany({ email: /test\.com|@test\.|security|attacker|sql|xss/ });
         if (mongoose.connection.readyState) {
             await mongoose.connection.close();
         }

@@ -17,7 +17,7 @@ describe('User Endpoints - Performance & Load Testing', () => {
     });
 
     afterAll(async () => {
-        await User.deleteMany({ email: /perf|load|bulk|mass/ });
+        await User.deleteMany({ email: /perf|load|bulk|mass|rapid|concurrent|timestamp|largedata|largephone|unicode|emoji|symbols/ });
         if (mongoose.connection.readyState) {
             await mongoose.connection.close();
         }
