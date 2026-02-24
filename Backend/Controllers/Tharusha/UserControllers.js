@@ -1,4 +1,15 @@
 const User = require("../../Model/Tharusha/UserModel");
+const jwt = require("jsonwebtoken");
+
+// Generate JWT Token
+const generateToken = (userId) => {
+    const token = jwt.sign(
+        { id: userId },
+        process.env.JWT_SECRET || "your_super_secret_jwt_key",
+        { expiresIn: "7d" }
+    );
+    return token;
+};
 
 // User Registration
 const registerUser = async (req, res, next) => {
@@ -47,9 +58,13 @@ const registerUser = async (req, res, next) => {
 
         await user.save();
 
+        // Generate JWT Token
+        const token = generateToken(user._id);
+
         res.status(201).json({
             success: true,
             message: "User registered successfully",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -60,6 +75,15 @@ const registerUser = async (req, res, next) => {
 
     } catch (error) {
         console.error("Registration error:", error);
+        
+        // Handle MongoDB duplicate key error (E11000)
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                message: "User already exists with this email" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error during registration" 
@@ -104,9 +128,13 @@ const loginUser = async (req, res, next) => {
             await user.save();
         }
 
+        // Generate JWT Token
+        const token = generateToken(user._id);
+
         res.status(200).json({
             success: true,
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -168,7 +196,14 @@ const getById = async (req, res, next) => {
             user
         });
     } catch (error) {
-        console.error("Get user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while fetching user" 
@@ -200,7 +235,14 @@ const updateUser = async (req, res, next) => {
             user
         });
     } catch (error) {
-        console.error("Update user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while updating user" 
@@ -225,7 +267,14 @@ const deleteUser = async (req, res, next) => {
             message: "User deleted successfully"
         });
     } catch (error) {
-        console.error("Delete user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while deleting user" 
