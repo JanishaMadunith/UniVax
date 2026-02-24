@@ -1,9 +1,20 @@
 const User = require("../../Model/Tharusha/UserModel");
+const jwt = require("jsonwebtoken");
+
+// Generate JWT Token
+const generateToken = (userId, role) => {
+    const token = jwt.sign(
+        { id: userId, role: role || 'Patient' },
+        process.env.JWT_SECRET || "your_super_secret_jwt_key",
+        { expiresIn: "7d" }
+    );
+    return token;
+};
 
 // User Registration
 const registerUser = async (req, res, next) => {
     try {
-        const { name, email, phone, password, confirmPassword, agreeToTerms } = req.body;
+        const { name, email, phone, password, confirmPassword, agreeToTerms, role } = req.body;
 
         // Validation
         if (!name || !email || !phone || !password || !agreeToTerms) {
@@ -27,6 +38,14 @@ const registerUser = async (req, res, next) => {
             });
         }
 
+        // Validate role if provided
+        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+            });
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -42,24 +61,39 @@ const registerUser = async (req, res, next) => {
             email,
             phone,
             password,
-            agreeToTerms
+            agreeToTerms,
+            role: role || 'Patient'
         });
 
         await user.save();
 
+        // Generate JWT Token
+        const token = generateToken(user._id, user.role);
+
         res.status(201).json({
             success: true,
             message: "User registered successfully",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                role: user.role
             }
         });
 
     } catch (error) {
         console.error("Registration error:", error);
+        
+        // Handle MongoDB duplicate key error (E11000)
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                message: "User already exists with this email" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error during registration" 
@@ -104,14 +138,19 @@ const loginUser = async (req, res, next) => {
             await user.save();
         }
 
+        // Generate JWT Token
+        const token = generateToken(user._id, user.role);
+
         res.status(200).json({
             success: true,
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
+                role: user.role,
                 rememberMe: user.rememberMe
             }
         });
@@ -168,7 +207,14 @@ const getById = async (req, res, next) => {
             user
         });
     } catch (error) {
-        console.error("Get user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while fetching user" 
@@ -179,11 +225,22 @@ const getById = async (req, res, next) => {
 // Update user
 const updateUser = async (req, res, next) => {
     try {
-        const { name, email, phone } = req.body;
+        const { name, email, phone, role } = req.body;
+        
+        // Validate role if provided
+        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+            });
+        }
+        
+        const updateData = { name, email, phone };
+        if (role) updateData.role = role;
         
         const user = await User.findByIdAndUpdate(
             req.params.id,
-            { name, email, phone },
+            updateData,
             { new: true, runValidators: true }
         ).select("-password");
 
@@ -200,7 +257,14 @@ const updateUser = async (req, res, next) => {
             user
         });
     } catch (error) {
-        console.error("Update user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while updating user" 
@@ -225,7 +289,14 @@ const deleteUser = async (req, res, next) => {
             message: "User deleted successfully"
         });
     } catch (error) {
-        console.error("Delete user error:", error);
+        // Handle invalid ObjectId format
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid user ID format" 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: "Server error while deleting user" 

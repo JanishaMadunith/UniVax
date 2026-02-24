@@ -25,6 +25,11 @@ const userSchema = new Schema({
         required: true,
         minlength: 6
     },
+    role: {
+        type: String,
+        enum: ['Patient', 'Doctor', 'Admin'],
+        default: 'Patient',
+  },
     agreeToTerms: {
         type: Boolean,
         required: true,
