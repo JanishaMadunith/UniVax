@@ -1,4 +1,4 @@
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 module.exports = (allowedRoles) => (req, res, next) => {
   const token = req.header('Authorization')?.split(' ')[1];

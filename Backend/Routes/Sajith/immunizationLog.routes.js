@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createLog, getLogs, getLogById, updateLog, deleteLog } = require("../../Controllers/Sajith/immunization.controller");
+const { createLog, getLogs, getLogById, updateLog, deleteLog } = require("../../Controllers/Sajith/immunization.controller.js");
 const authMiddleware = require('../../middlewares/auth.middleware');  // Placeholder for JWT/role check
 
 // Protected routes
