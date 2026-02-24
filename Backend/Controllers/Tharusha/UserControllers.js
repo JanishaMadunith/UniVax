@@ -2,9 +2,9 @@ const User = require("../../Model/Tharusha/UserModel");
 const jwt = require("jsonwebtoken");
 
 // Generate JWT Token
-const generateToken = (userId) => {
+const generateToken = (userId, role) => {
     const token = jwt.sign(
-        { id: userId },
+        { id: userId, role: role || 'Patient' },
         process.env.JWT_SECRET || "your_super_secret_jwt_key",
         { expiresIn: "7d" }
     );
@@ -14,7 +14,7 @@ const generateToken = (userId) => {
 // User Registration
 const registerUser = async (req, res, next) => {
     try {
-        const { name, email, phone, password, confirmPassword, agreeToTerms } = req.body;
+        const { name, email, phone, password, confirmPassword, agreeToTerms, role } = req.body;
 
         // Validation
         if (!name || !email || !phone || !password || !agreeToTerms) {
@@ -38,6 +38,14 @@ const registerUser = async (req, res, next) => {
             });
         }
 
+        // Validate role if provided
+        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+            });
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -53,13 +61,14 @@ const registerUser = async (req, res, next) => {
             email,
             phone,
             password,
-            agreeToTerms
+            agreeToTerms,
+            role: role || 'Patient'
         });
 
         await user.save();
 
         // Generate JWT Token
-        const token = generateToken(user._id);
+        const token = generateToken(user._id, user.role);
 
         res.status(201).json({
             success: true,
@@ -69,7 +78,8 @@ const registerUser = async (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                role: user.role
             }
         });
 
@@ -129,7 +139,7 @@ const loginUser = async (req, res, next) => {
         }
 
         // Generate JWT Token
-        const token = generateToken(user._id);
+        const token = generateToken(user._id, user.role);
 
         res.status(200).json({
             success: true,
@@ -140,6 +150,7 @@ const loginUser = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
+                role: user.role,
                 rememberMe: user.rememberMe
             }
         });
@@ -214,11 +225,22 @@ const getById = async (req, res, next) => {
 // Update user
 const updateUser = async (req, res, next) => {
     try {
-        const { name, email, phone } = req.body;
+        const { name, email, phone, role } = req.body;
+        
+        // Validate role if provided
+        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+            });
+        }
+        
+        const updateData = { name, email, phone };
+        if (role) updateData.role = role;
         
         const user = await User.findByIdAndUpdate(
             req.params.id,
-            { name, email, phone },
+            updateData,
             { new: true, runValidators: true }
         ).select("-password");
 

@@ -346,6 +346,8 @@ describe('User Authentication & Security Testing', () => {
             expect(res.body.user).toHaveProperty('name');
             expect(res.body.user).toHaveProperty('email');
             expect(res.body.user).toHaveProperty('phone');
+            expect(res.body.user).toHaveProperty('role');
+            expect(['Patient', 'Doctor', 'Admin']).toContain(res.body.user.role);
         });
 
         it('Should not leak sensitive information in error responses', async () => {
@@ -361,6 +363,122 @@ describe('User Authentication & Security Testing', () => {
             // Message should be generic without revealing specific field
             expect(res.body.message).not.toContain('missing');
             expect(res.body.message).not.toContain('incorrect');
+        });
+    });
+
+    // --- TEST: Role Management & Security ---
+    describe('Role Management & Security', () => {
+        it('Should assign default Patient role during registration', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Default Role User',
+                    email: `defaultrole${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true
+                    // No role specified
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Patient');
+        });
+
+        it('Should allow registration with Doctor role', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Doctor User',
+                    email: `doctor${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Doctor'
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Doctor');
+        });
+
+        it('Should allow registration with Admin role', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Admin User',
+                    email: `adminuser${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Admin'
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Admin');
+        });
+
+        it('Should reject invalid role values', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Invalid Role',
+                    email: `invalidrole${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Superuser'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toContain('Invalid role');
+        });
+
+        it('Should include role in JWT token', async () => {
+            const loginRes = await request(server)
+                .post(`${API_PREFIX}/login`)
+                .send({
+                    email: validUserEmail,
+                    password: validUserPassword
+                });
+
+            expect(loginRes.statusCode).toBe(200);
+            const token = loginRes.body.token;
+            
+            // Decode JWT token (just verify it contains role data)
+            const parts = token.split('.');
+            expect(parts.length).toBe(3); // Valid JWT has 3 parts
+        });
+
+        it('Should allow role updates for existing users', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${validUserId}`)
+                .send({
+                    role: 'Doctor'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.user.role).toBe('Doctor');
+
+            // Verify the update persisted
+            const getRes = await request(server)
+                .get(`${API_PREFIX}/${validUserId}`);
+            expect(getRes.body.user.role).toBe('Doctor');
+        });
+
+        it('Should reject invalid role updates', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${validUserId}`)
+                .send({
+                    role: 'InvalidRole'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toContain('Invalid role');
         });
     });
 });

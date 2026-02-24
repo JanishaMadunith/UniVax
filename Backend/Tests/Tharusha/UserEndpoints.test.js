@@ -49,6 +49,7 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.user.name).toBe('John Doe');
             expect(res.body.user.email).toBe('test@test.com');
             expect(res.body.user.phone).toBe('0771234567');
+            expect(res.body.user.role).toBe('Patient'); // Default role
             expect(res.body.user.id).toBeDefined();
             userId = res.body.user.id; // Save for later tests
         });
@@ -136,6 +137,60 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.success).toBe(false);
             expect(res.body.message).toBe('All fields are required');
         });
+
+        it('Should register user with Doctor role when specified', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Dr. Smith',
+                    email: `doctor${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Doctor'
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.success).toBe(true);
+            expect(res.body.user.role).toBe('Doctor');
+        });
+
+        it('Should register user with Admin role when specified', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Admin User',
+                    email: `admin${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Admin'
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.success).toBe(true);
+            expect(res.body.user.role).toBe('Admin');
+        });
+
+        it('Should reject invalid role', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Invalid Role User',
+                    email: `invalid${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'InvalidRole'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toContain('Invalid role');
+        });
     });
 
     // --- TEST: User Login ---
@@ -156,6 +211,7 @@ describe('User Endpoints Integration Testing', () => {
             expect(typeof res.body.token).toBe('string');
             expect(res.body.user.email).toBe('test@test.com');
             expect(res.body.user.name).toBe('John Doe');
+            expect(res.body.user.role).toBe('Patient');
         });
 
         it('Should successfully login and set rememberMe flag', async () => {
@@ -251,6 +307,8 @@ describe('User Endpoints Integration Testing', () => {
                 expect(user._id).toBeDefined();
                 expect(user.name).toBeDefined();
                 expect(user.email).toBeDefined();
+                expect(user.role).toBeDefined();
+                expect(['Patient', 'Doctor', 'Admin']).toContain(user.role);
                 expect(user.phone).toBeDefined();
             });
         });
@@ -307,6 +365,7 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.message).toBe('User updated successfully');
             expect(res.body.user.name).toBe('John Updated');
             expect(res.body.user.phone).toBe('0779876543');
+            expect(res.body.user.role).toBeDefined();
         });
 
         it('Should update only name field', async () => {
@@ -319,6 +378,46 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.success).toBe(true);
             expect(res.body.user.name).toBe('John Final Name');
+        });
+
+        it('Should successfully update user role', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    role: 'Doctor'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.user.role).toBe('Doctor');
+        });
+
+        it('Should reject invalid role during update', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    role: 'SuperAdmin'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toContain('Invalid role');
+        });
+
+        it('Should update multiple user fields including role', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    name: 'Updated Full Name',
+                    phone: '0770000111',
+                    role: 'Admin'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.user.name).toBe('Updated Full Name');
+            expect(res.body.user.phone).toBe('0770000111');
+            expect(res.body.user.role).toBe('Admin');
         });
 
         it('Should not update password field', async () => {

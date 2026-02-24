@@ -27,7 +27,8 @@ describe('User Endpoints - Performance & Load Testing', () => {
     describe('Bulk Operations', () => {
         it('Should handle multiple rapid registrations', async () => {
             const registrations = [];
-            
+            const roles = ['Patient', 'Doctor', 'Admin', 'Patient', 'Doctor'];
+
             for (let i = 0; i < 5; i++) {
                 registrations.push(
                     request(server)
@@ -38,7 +39,8 @@ describe('User Endpoints - Performance & Load Testing', () => {
                             phone: `077${String(i).padStart(7, '0')}`,
                             password: 'password123',
                             confirmPassword: 'password123',
-                            agreeToTerms: true
+                            agreeToTerms: true,
+                            role: roles[i]
                         })
                 );
             }
@@ -49,6 +51,7 @@ describe('User Endpoints - Performance & Load Testing', () => {
                 expect(res.statusCode).toBe(201);
                 expect(res.body.success).toBe(true);
                 expect(res.body.user.email).toBe(`bulkuser${index}@test.com`);
+                expect(res.body.user.role).toBe(roles[index]);
             });
         });
 
@@ -353,6 +356,81 @@ describe('User Endpoints - Performance & Load Testing', () => {
             expect(finalUser).toBeDefined();
             expect(finalUser.name).toBeDefined();
             expect(finalUser.phone).toBeDefined();
+        });
+    });
+
+    // --- TEST: Role Performance ---
+    describe('Role Field Performance', () => {
+        it('Should handle bulk role assignments efficiently', async () => {
+            const start = Date.now();
+            const res = await request(server).get(`${API_PREFIX}/`);
+            const duration = Date.now() - start;
+
+            expect(res.statusCode).toBe(200);
+            expect(duration).toBeLessThan(3000);
+
+            // Verify all users have role field
+            res.body.users.forEach(user => {
+                expect(user.role).toBeDefined();
+                expect(['Patient', 'Doctor', 'Admin']).toContain(user.role);
+            });
+        });
+
+        it('Should handle rapid role updates', async () => {
+            const createRes = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Role Test User',
+                    email: `roletest${Date.now()}@test.com`,
+                    phone: '0770009999',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Patient'
+                });
+
+            const userId = createRes.body.user.id;
+            const roles = ['Doctor', 'Admin', 'Patient', 'Doctor'];
+            const updates = [];
+
+            for (let role of roles) {
+                updates.push(
+                    request(server)
+                        .put(`${API_PREFIX}/${userId}`)
+                        .send({ role: role })
+                );
+            }
+
+            const results = await Promise.all(updates);
+
+            results.forEach(res => {
+                expect(res.statusCode).toBe(200);
+                expect(res.body.user.role).toBeDefined();
+            });
+        });
+
+        it('Should retrieve users filtered by role consideration', async () => {
+            const start = Date.now();
+            const res = await request(server).get(`${API_PREFIX}/`);
+            const duration = Date.now() - start;
+
+            expect(res.statusCode).toBe(200);
+            expect(duration).toBeLessThan(2000);
+
+            // Count users by role
+            const roleCount = {
+                Patient: 0,
+                Doctor: 0,
+                Admin: 0
+            };
+
+            res.body.users.forEach(user => {
+                if (user.role in roleCount) {
+                    roleCount[user.role]++;
+                }
+            });
+
+            expect(roleCount.Patient + roleCount.Doctor + roleCount.Admin).toBeGreaterThan(0);
         });
     });
 
