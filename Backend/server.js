@@ -5,6 +5,8 @@ const userRoutes = require("./Routes/Tharusha/UserRoutes");
 const vaccineRoutes = require("./Routes/Dillon/VaccineRoutes");
 const doseRoutes = require("./Routes/Dillon/DoseRoutes");
 const appointmentRoutes = require("./Routes/Janeesha/AppointmentRoutes");
+const authMiddleware = require("./middlewares/auth.middleware");  // Placeholder for JWT/role check
+const immunizationLogRoutes = require("./Routes/Sajith/immunizationLog.routes");  // New route for immunization logs
 
 const app = express();
 
@@ -16,6 +18,7 @@ app.use("/users", userRoutes);
 app.use("/vaccines", vaccineRoutes);
 app.use("/doses", doseRoutes);
 app.use("/appointments", appointmentRoutes);
+app.use("/logs",immunizationLogRoutes)  // Register immunization log routes
 
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI;
