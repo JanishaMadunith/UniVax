@@ -308,7 +308,7 @@ describe('User Endpoints Integration Testing', () => {
                 expect(user.name).toBeDefined();
                 expect(user.email).toBeDefined();
                 expect(user.role).toBeDefined();
-                expect(['Patient', 'Doctor', 'Admin']).toContain(user.role);
+                expect(['Patient', 'Doctor', 'Admin', 'Official']).toContain(user.role);
                 expect(user.phone).toBeDefined();
             });
         });
@@ -589,4 +589,132 @@ describe('User Endpoints Integration Testing', () => {
             expect(res.body.user.phone).toBe('+94-77-1234-5678');
         });
     });
+
+    // --- TEST: User Profile Fields ---
+    describe('User Profile Fields', () => {
+        it('Should register user with address information', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Address User',
+                    email: `addressuser${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    address: {
+                        city: 'Colombo',
+                        district: 'Western',
+                        province: 'Western Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.address).toBeDefined();
+            expect(res.body.user.address.city).toBe('Colombo');
+            expect(res.body.user.address.district).toBe('Western');
+        });
+
+        it('Should initialize accountStatus as Active for new users', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Status User',
+                    email: `statususer${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.accountStatus).toBe('Active');
+        });
+
+        it('Should register Doctor with credentials', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Dr. Smith',
+                    email: `drsmith${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Doctor',
+                    doctorCredentials: {
+                        licenseNumber: 'DOC001',
+                        clinicName: 'Main Hospital',
+                        specialization: 'Cardiology'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Doctor');
+            expect(res.body.user.doctorCredentials).toBeDefined();
+        });
+
+        it('Should update user address', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    address: {
+                        city: 'Kandy',
+                        district: 'Central',
+                        province: 'Central Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.user.address).toBeDefined();
+            expect(res.body.user.address.city).toBe('Kandy');
+        });
+
+        it('Should update accountStatus', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    accountStatus: 'Suspended'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.user.accountStatus).toBe('Suspended');
+        });
+
+        it('Should reject invalid accountStatus', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    accountStatus: 'Blocked'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.message).toContain('Invalid account status');
+        });
+
+        it('Should register user with Official role and address', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Health Official',
+                    email: `official${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Official',
+                    address: {
+                        city: 'Colombo',
+                        district: 'Western',
+                        province: 'Western Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Official');
+            expect(res.body.user.address.district).toBe('Western');
+        });
+    });
 });
+
+

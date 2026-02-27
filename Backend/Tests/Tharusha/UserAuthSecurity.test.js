@@ -347,7 +347,7 @@ describe('User Authentication & Security Testing', () => {
             expect(res.body.user).toHaveProperty('email');
             expect(res.body.user).toHaveProperty('phone');
             expect(res.body.user).toHaveProperty('role');
-            expect(['Patient', 'Doctor', 'Admin']).toContain(res.body.user.role);
+            expect(['Patient', 'Doctor', 'Admin', 'Official']).toContain(res.body.user.role);
         });
 
         it('Should not leak sensitive information in error responses', async () => {
@@ -419,6 +419,30 @@ describe('User Authentication & Security Testing', () => {
             expect(res.body.user.role).toBe('Admin');
         });
 
+        it('Should allow registration with Official role', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Official User',
+                    email: `official${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Official',
+                    address: {
+                        city: 'Colombo',
+                        district: 'Western',
+                        province: 'Western Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.role).toBe('Official');
+            expect(res.body.user.address).toBeDefined();
+            expect(res.body.user.address.city).toBe('Colombo');
+        });
+
         it('Should reject invalid role values', async () => {
             const res = await request(server)
                 .post(`${API_PREFIX}/register`)
@@ -481,4 +505,113 @@ describe('User Authentication & Security Testing', () => {
             expect(res.body.message).toContain('Invalid role');
         });
     });
+
+    // --- TEST: User Profile Fields ---
+    describe('User Profile Fields & Credentials', () => {
+        it('Should store and retrieve address information', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Address Test User',
+                    email: `addresstest${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    address: {
+                        city: 'Colombo',
+                        district: 'Western',
+                        province: 'Western Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.address).toBeDefined();
+            expect(res.body.user.address.city).toBe('Colombo');
+            expect(res.body.user.address.district).toBe('Western');
+            expect(res.body.user.address.province).toBe('Western Province');
+        });
+
+        it('Should set default accountStatus to Active', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Status Test User',
+                    email: `statustest${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.accountStatus).toBe('Active');
+        });
+
+        it('Should store doctor credentials for Doctor role', async () => {
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Doctor with Credentials',
+                    email: `doctorwithcreds${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Doctor',
+                    doctorCredentials: {
+                        licenseNumber: 'LIC123456',
+                        clinicName: 'Central Clinic',
+                        specialization: 'Pediatrics'
+                    }
+                });
+
+            expect(res.statusCode).toBe(201);
+            expect(res.body.user.doctorCredentials).toBeDefined();
+            expect(res.body.user.doctorCredentials.licenseNumber).toBe('LIC123456');
+            expect(res.body.user.doctorCredentials.clinicName).toBe('Central Clinic');
+            expect(res.body.user.doctorCredentials.specialization).toBe('Pediatrics');
+        });
+
+        it('Should allow updating accountStatus', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${validUserId}`)
+                .send({
+                    accountStatus: 'Suspended'
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.user.accountStatus).toBe('Suspended');
+        });
+
+        it('Should reject invalid accountStatus values', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${validUserId}`)
+                .send({
+                    accountStatus: 'InvalidStatus'
+                });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toContain('Invalid account status');
+        });
+
+        it('Should allow updating address information', async () => {
+            const res = await request(server)
+                .put(`${API_PREFIX}/${validUserId}`)
+                .send({
+                    address: {
+                        city: 'Kandy',
+                        district: 'Central',
+                        province: 'Central Province'
+                    }
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.user.address.city).toBe('Kandy');
+            expect(res.body.user.address.district).toBe('Central');
+        });
+    });
 });
+
+

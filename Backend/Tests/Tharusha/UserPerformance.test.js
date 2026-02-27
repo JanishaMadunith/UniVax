@@ -27,7 +27,7 @@ describe('User Endpoints - Performance & Load Testing', () => {
     describe('Bulk Operations', () => {
         it('Should handle multiple rapid registrations', async () => {
             const registrations = [];
-            const roles = ['Patient', 'Doctor', 'Admin', 'Patient', 'Doctor'];
+            const roles = ['Patient', 'Doctor', 'Admin', 'Official', 'Patient'];
 
             for (let i = 0; i < 5; i++) {
                 registrations.push(
@@ -372,7 +372,7 @@ describe('User Endpoints - Performance & Load Testing', () => {
             // Verify all users have role field
             res.body.users.forEach(user => {
                 expect(user.role).toBeDefined();
-                expect(['Patient', 'Doctor', 'Admin']).toContain(user.role);
+                expect(['Patient', 'Doctor', 'Admin', 'Official']).toContain(user.role);
             });
         });
 
@@ -430,7 +430,7 @@ describe('User Endpoints - Performance & Load Testing', () => {
                 }
             });
 
-            expect(roleCount.Patient + roleCount.Doctor + roleCount.Admin).toBeGreaterThan(0);
+            expect(roleCount.Patient + roleCount.Doctor + roleCount.Admin + (roleCount.Official || 0)).toBeGreaterThan(0);
         });
     });
 
@@ -475,4 +475,120 @@ describe('User Endpoints - Performance & Load Testing', () => {
             expect(duration).toBeLessThan(500); // Should be under 500ms
         });
     });
+
+    // --- TEST: Extended Profile Fields Performance ---
+    describe('Extended Profile Fields Performance', () => {
+        it('Should handle user registration with address and doctor credentials efficiently', async () => {
+            const start = Date.now();
+            const res = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Performance Doctor',
+                    email: `perfdr${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true,
+                    role: 'Doctor',
+                    address: {
+                        city: 'Colombo',
+                        district: 'Western',
+                        province: 'Western Province'
+                    },
+                    doctorCredentials: {
+                        licenseNumber: 'PERFLIC123',
+                        clinicName: 'Performance Clinic',
+                        specialization: 'Performance Testing'
+                    }
+                });
+            const duration = Date.now() - start;
+
+            expect(res.statusCode).toBe(201);
+            expect(duration).toBeLessThan(2000); // Should complete within 2 seconds
+            expect(res.body.user.address).toBeDefined();
+            expect(res.body.user.doctorCredentials).toBeDefined();
+        });
+
+        it('Should handle bulk registration with Official role efficiently', async () => {
+            const registrations = [];
+            const start = Date.now();
+
+            for (let i = 0; i < 3; i++) {
+                registrations.push(
+                    request(server)
+                        .post(`${API_PREFIX}/register`)
+                        .send({
+                            name: `Official User ${i}`,
+                            email: `perf-official${i}-${Date.now()}@test.com`,
+                            phone: `077${String(i).padStart(7, '0')}`,
+                            password: 'password123',
+                            confirmPassword: 'password123',
+                            agreeToTerms: true,
+                            role: 'Official',
+                            address: {
+                                city: 'Colombo',
+                                district: 'Western',
+                                province: 'Western Province'
+                            }
+                        })
+                );
+            }
+
+            const results = await Promise.all(registrations);
+            const duration = Date.now() - start;
+
+            expect(duration).toBeLessThan(5000); // Should complete all within 5 seconds
+            results.forEach(res => {
+                expect(res.statusCode).toBe(201);
+                expect(res.body.user.role).toBe('Official');
+                expect(res.body.user.address).toBeDefined();
+            });
+        });
+
+        it('Should retrieve users with extended fields efficiently', async () => {
+            const start = Date.now();
+            const res = await request(server).get(`${API_PREFIX}/`);
+            const duration = Date.now() - start;
+
+            expect(res.statusCode).toBe(200);
+            expect(duration).toBeLessThan(3000);
+            
+            // Verify extended fields are present
+            res.body.users.forEach(user => {
+                expect(user.address).toBeDefined();
+                expect(user.accountStatus).toBeDefined();
+            });
+        });
+
+        it('Should handle accountStatus updates efficiently', async () => {
+            // First create a user
+            const createRes = await request(server)
+                .post(`${API_PREFIX}/register`)
+                .send({
+                    name: 'Status User',
+                    email: `perfstatus${Date.now()}@test.com`,
+                    phone: '0771234567',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    agreeToTerms: true
+                });
+
+            const userId = createRes.body.user.id;
+            const start = Date.now();
+            
+            const res = await request(server)
+                .put(`${API_PREFIX}/${userId}`)
+                .send({
+                    accountStatus: 'Suspended'
+                });
+            
+            const duration = Date.now() - start;
+
+            expect(res.statusCode).toBe(200);
+            expect(duration).toBeLessThan(1000);
+            expect(res.body.user.accountStatus).toBe('Suspended');
+        });
+    });
 });
+
+

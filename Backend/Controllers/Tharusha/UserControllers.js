@@ -14,7 +14,7 @@ const generateToken = (userId, role) => {
 // User Registration
 const registerUser = async (req, res, next) => {
     try {
-        const { name, email, phone, password, confirmPassword, agreeToTerms, role } = req.body;
+        const { name, email, phone, password, confirmPassword, agreeToTerms, role, address, doctorCredentials } = req.body;
 
         // Validation
         if (!name || !email || !phone || !password || !agreeToTerms) {
@@ -39,10 +39,10 @@ const registerUser = async (req, res, next) => {
         }
 
         // Validate role if provided
-        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+        if (role && !['Patient', 'Doctor', 'Admin', 'Official'].includes(role)) {
             return res.status(400).json({ 
                 success: false,
-                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+                message: "Invalid role. Must be Patient, Doctor, Admin, or Official" 
             });
         }
 
@@ -62,7 +62,10 @@ const registerUser = async (req, res, next) => {
             phone,
             password,
             agreeToTerms,
-            role: role || 'Patient'
+            role: role || 'Patient',
+            address: address || {},
+            doctorCredentials: (role === 'Doctor' && doctorCredentials) ? doctorCredentials : {},
+            accountStatus: 'Active'
         });
 
         await user.save();
@@ -79,7 +82,10 @@ const registerUser = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                address: user.address,
+                accountStatus: user.accountStatus,
+                ...(user.role === 'Doctor' && { doctorCredentials: user.doctorCredentials })
             }
         });
 
@@ -151,7 +157,10 @@ const loginUser = async (req, res, next) => {
                 email: user.email,
                 phone: user.phone,
                 role: user.role,
-                rememberMe: user.rememberMe
+                address: user.address,
+                accountStatus: user.accountStatus,
+                rememberMe: user.rememberMe,
+                ...(user.role === 'Doctor' && { doctorCredentials: user.doctorCredentials })
             }
         });
 
@@ -225,18 +234,29 @@ const getById = async (req, res, next) => {
 // Update user
 const updateUser = async (req, res, next) => {
     try {
-        const { name, email, phone, role } = req.body;
+        const { name, email, phone, role, address, doctorCredentials, accountStatus } = req.body;
         
         // Validate role if provided
-        if (role && !['Patient', 'Doctor', 'Admin'].includes(role)) {
+        if (role && !['Patient', 'Doctor', 'Admin', 'Official'].includes(role)) {
             return res.status(400).json({ 
                 success: false,
-                message: "Invalid role. Must be Patient, Doctor, or Admin" 
+                message: "Invalid role. Must be Patient, Doctor, Admin, or Official" 
+            });
+        }
+
+        // Validate accountStatus if provided
+        if (accountStatus && !['Active', 'Suspended', 'Pending'].includes(accountStatus)) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid account status. Must be Active, Suspended, or Pending" 
             });
         }
         
         const updateData = { name, email, phone };
         if (role) updateData.role = role;
+        if (address) updateData.address = address;
+        if (accountStatus) updateData.accountStatus = accountStatus;
+        if (role === 'Doctor' && doctorCredentials) updateData.doctorCredentials = doctorCredentials;
         
         const user = await User.findByIdAndUpdate(
             req.params.id,

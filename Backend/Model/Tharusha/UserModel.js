@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const bcrypt = require("bcryptjs");
 
 const userSchema = new Schema({
+    // --- basic authentication ---
     name: {
         type: String,
         required: true,
@@ -27,31 +28,55 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['Patient', 'Doctor', 'Admin'],
+        enum: ['Patient', 'Doctor', 'Admin', 'Official'], 
         default: 'Patient',
-  },
+    },
+
+    address: {
+        city: { type: String, required: true },
+        district: { type: String, required: true }, // Required for Health Official Analytics
+        province: { type: String }
+    },
+
+    accountStatus: {
+        type: String,
+        enum: ['Active', 'Suspended', 'Pending'],
+        default: 'Active'
+    },
     agreeToTerms: {
         type: Boolean,
         required: true,
         default: false
     },
+
+    doctorCredentials: {
+        licenseNumber: { type: String },
+        clinicName: { type: String },
+        specialization: { type: String }
+    },
+
     rememberMe: {
         type: Boolean,
         default: false
     }
 }, {
-    timestamps: true
+    timestamps: true // Automatically creates createdAt and updatedAt
 });
 
-// Hash password before saving
-userSchema.pre("save", async function() {
-    if (!this.isModified("password")) return;
+// --- MIDDLEWARE: Password Hashing ---
+userSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) return next();
     
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
 });
 
-// Compare password method
+// --- METHODS: Authentication Check ---
 userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
