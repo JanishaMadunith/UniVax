@@ -1,4 +1,4 @@
-const immunizationLogService = require("../../Services/Sajith/immunizationLog.service.js");
+const immunizationLogService = require("../../Services/ImmunizationLogs/immunizationLog.service.js");
 
 const createLog = async (req, res) => {
   try {
