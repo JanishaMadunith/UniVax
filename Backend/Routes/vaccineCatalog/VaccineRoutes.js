@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const vaccineController = require('../../Controllers/vaccineCatalog/VaccineController');
+const authMiddleware = require("../../middlewares/auth.middleware");
 
 // Validation middleware (you can move this to a separate file)
 const validateVaccine = (req, res, next) => {
@@ -57,14 +58,14 @@ const validateDose = (req, res, next) => {
 
 // Vaccine CRUD routes
 router.route('/')
-  .get(vaccineController.getAllVaccines)
-  .post(validateVaccine, vaccineController.createVaccine);
+  .get(authMiddleware(['Patient', 'Doctor', 'Admin']), vaccineController.getAllVaccines)
+  .post(authMiddleware(['Doctor', 'Admin']), validateVaccine, vaccineController.createVaccine);
 
 router.route('/:id')
-  .get(vaccineController.getVaccineById)
-  .put(validateVaccine, vaccineController.updateVaccine)
-  .delete(vaccineController.deleteVaccine);
+  .get(authMiddleware(['Patient', 'Doctor', 'Admin']), vaccineController.getVaccineById)
+  .put(authMiddleware(['Doctor', 'Admin']), validateVaccine, vaccineController.updateVaccine)
+  .delete(authMiddleware(['Doctor', 'Admin']), vaccineController.deleteVaccine);
 
-router.get('/:id/history', vaccineController.getVaccineHistory);
+router.get('/:id/history', authMiddleware(['Patient', 'Doctor', 'Admin']), vaccineController.getVaccineHistory);
 
 module.exports = router;
