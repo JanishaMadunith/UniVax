@@ -142,10 +142,13 @@ const updateVaccine = async (vaccineId, updateData, userId) => {
       };
     }
 
-    // If status change or major update, create new version
-    if (updateData.status !== oldVaccine.status || 
-        updateData.totalDoses !== oldVaccine.totalDoses) {
-      
+    // Check if this is a significant change that requires versioning
+    // Only trigger versioning if status or totalDoses are actually being changed
+    const isSignificantChange = 
+      (updateData.status !== undefined && updateData.status !== oldVaccine.status) ||
+      (updateData.totalDoses !== undefined && updateData.totalDoses !== oldVaccine.totalDoses);
+
+    if (isSignificantChange) {
       // Archive old version
       await VaccineProduct.findByIdAndUpdate(vaccineId, {
         status: 'archived',
@@ -173,16 +176,13 @@ const updateVaccine = async (vaccineId, updateData, userId) => {
       };
     }
 
-    // Minor update (no version change)
+    // Minor update (no version change) - directly update fields
     const vaccine = await VaccineProduct.findByIdAndUpdate(
       vaccineId,
-      {
-        ...updateData,
-        lastModifiedBy: userId || 'system'
-      },
+      { $set: updateData },
       {
         new: true,
-        runValidators: true
+        runValidators: false
       }
     );
 

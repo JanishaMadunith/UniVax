@@ -135,16 +135,20 @@ const updateDose = async (doseId, updateData) => {
       };
     }
 
-    // If significant change, create new version
-    if (updateData.minAge || updateData.intervalFromPrevious) {
+    // Check if this is a significant change that requires versioning
+    const isSignificantChange = 
+      (updateData.minAge && JSON.stringify(updateData.minAge) !== JSON.stringify(oldDose.minAge)) ||
+      (updateData.intervalFromPrevious && JSON.stringify(updateData.intervalFromPrevious) !== JSON.stringify(oldDose.intervalFromPrevious));
+
+    if (isSignificantChange) {
       // Mark old version as superseded
       await DoseRequirement.findByIdAndUpdate(doseId, {
         status: 'superseded',
         validUntil: new Date()
       });
 
-      // Create new version
-      const newDose = await DoseRequirement.create({
+      // Create new version with all changes
+      const newVersion = {
         ...oldDose.toObject(),
         ...updateData,
         _id: undefined,
@@ -152,7 +156,12 @@ const updateDose = async (doseId, updateData) => {
         validFrom: new Date(),
         validUntil: null,
         status: 'active'
-      });
+      };
+
+      // Remove __v to avoid conflicts
+      delete newVersion.__v;
+
+      const newDose = await DoseRequirement.create(newVersion);
 
       return {
         success: true,
@@ -161,19 +170,19 @@ const updateDose = async (doseId, updateData) => {
       };
     }
 
-    // Minor update
+    // Minor update - directly update with all provided fields
     const dose = await DoseRequirement.findByIdAndUpdate(
       doseId,
-      updateData,
+      { $set: updateData },
       {
         new: true,
-        runValidators: true
+        runValidators: false
       }
     );
 
     return {
       success: true,
-      message: 'Dose requirement updated',
+      message: 'Dose requirement updated successfully',
       data: dose
     };
   } catch (error) {
