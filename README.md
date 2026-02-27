@@ -101,20 +101,7 @@ Third-party: Google Calendar/Twilio for reminders.
 | /api/V1/logs/:id | PUT | Update notes | { "notes": "No side effects" } | Updated log | Doctor/Admin |
 | /api/V1/logs/:id | DELETE | Delete log | - | { "message": "Deleted" } | Admin |
 
-Third-party: PubChem for side-effect info.
-
-### Feedback/Ticketing System Component
-**Status**: *Not yet implemented*
-
-| Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
-|----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/V1/feedback | POST | Create ticket | { "title": "Side Effect", "description": "Headache after shot" } | Ticket object | User/Doctor |
-| /api/V1/feedback | GET | List tickets (filter: ?status=open) | - | Array | User/Admin |
-| /api/V1/feedback/:id | GET | View ticket | - | Ticket object | User/Admin |
-| /api/V1/feedback/:id | PUT | Update/response | { "status": "resolved", "response": "Advised rest" } | Updated ticket | Doctor/Admin |
-| /api/V1/feedback/:id | DELETE | Delete | - | { "message": "Deleted" } | Admin |
-
-Third-party: Twilio for SMS notifications on updates.
+Third-party: 
 
 Error Handling: Standard codes (400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Server Error).
 
