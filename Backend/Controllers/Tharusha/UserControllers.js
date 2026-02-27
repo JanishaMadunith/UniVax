@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const generateToken = (userId, role) => {
     const token = jwt.sign(
         { id: userId, role: role || 'Patient' },
-        process.env.JWT_SECRET || "your_super_secret_jwt_key",
+        process.env.JWT_SECRET,
         { expiresIn: "7d" }
     );
     return token;
