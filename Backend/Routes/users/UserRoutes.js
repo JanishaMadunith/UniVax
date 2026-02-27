@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const UserController = require("../../Controllers/Tharusha/UserControllers");
+const UserController = require("../../Controllers/Users/UserControllers");
 
 // Public routes
 router.post("/register", UserController.registerUser);

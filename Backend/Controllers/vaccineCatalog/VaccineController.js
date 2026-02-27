@@ -1,5 +1,5 @@
-const VaccineProduct = require('../../Model/Dillon/VaccineModel');
-const DoseRequirement = require('../../Model/Dillon/DoseModel');
+const VaccineProduct = require('../../Model/vaccineCatalog/VaccineModel');
+const DoseRequirement = require('../../Model/vaccineCatalog/DoseModel');
 
 // @desc    CREATE a new vaccine
 // @route   POST /api/vaccines

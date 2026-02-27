@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const AppointmentController = require("../../Controllers/Janeesha/AppointmentControllers");
+const AppointmentController = require("../../Controllers/Appointment/AppointmentControllers");
 
 router.post("/create", AppointmentController.createAppointment);
 router.get("/", AppointmentController.getAllAppointments);
