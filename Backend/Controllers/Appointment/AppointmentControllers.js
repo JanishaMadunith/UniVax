@@ -1,4 +1,4 @@
-const Appointment = require("../../Model/Janeesha/AppointmentModel");
+const AppointmentService = require("../../Services/Appointment/AppointmentService");
 
 // Create Appointment
 const createAppointment = async (req, res, next) => {
@@ -22,7 +22,7 @@ const createAppointment = async (req, res, next) => {
             });
         }
 
-        const newAppointment = new Appointment({
+        const result = await AppointmentService.createAppointment({
             fullName,
             email,
             phone,
@@ -33,19 +33,13 @@ const createAppointment = async (req, res, next) => {
             appointmentTime
         });
 
-        await newAppointment.save();
-
-        res.status(201).json({
-            success: true,
-            message: "Appointment created successfully",
-            appointment: newAppointment
-        });
+        res.status(201).json(result);
 
     } catch (error) {
         console.error("Create appointment error:", error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: "Server error during appointment creation"
+            message: error.message || "Server error during appointment creation"
         });
     }
 };
@@ -53,26 +47,14 @@ const createAppointment = async (req, res, next) => {
 // Get All Appointments
 const getAllAppointments = async (req, res, next) => {
     try {
-        const appointments = await Appointment.find();
-
-        if (!appointments || appointments.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No appointments found"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            count: appointments.length,
-            appointments
-        });
+        const result = await AppointmentService.getAllAppointments();
+        res.status(200).json(result);
 
     } catch (error) {
         console.error("Get appointments error:", error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: "Server error while fetching appointments"
+            message: error.message || "Server error while fetching appointments"
         });
     }
 };
@@ -80,25 +62,14 @@ const getAllAppointments = async (req, res, next) => {
 // Get Appointment by ID
 const getAppointmentById = async (req, res, next) => {
     try {
-        const appointment = await Appointment.findById(req.params.id);
-
-        if (!appointment) {
-            return res.status(404).json({
-                success: false,
-                message: "Appointment not found"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            appointment
-        });
+        const result = await AppointmentService.getAppointmentById(req.params.id);
+        res.status(200).json(result);
 
     } catch (error) {
         console.error("Get appointment error:", error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: "Server error while fetching appointment"
+            message: error.message || "Server error while fetching appointment"
         });
     }
 };
@@ -117,7 +88,7 @@ const updateAppointment = async (req, res, next) => {
             appointmentTime
         } = req.body;
 
-        const updatedAppointment = await Appointment.findByIdAndUpdate(
+        const result = await AppointmentService.updateAppointment(
             req.params.id,
             {
                 fullName,
@@ -128,28 +99,16 @@ const updateAppointment = async (req, res, next) => {
                 ageGroup,
                 appointmentDate,
                 appointmentTime
-            },
-            { new: true, runValidators: true }
+            }
         );
 
-        if (!updatedAppointment) {
-            return res.status(404).json({
-                success: false,
-                message: "Appointment not found"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: "Appointment updated successfully",
-            appointment: updatedAppointment
-        });
+        res.status(200).json(result);
 
     } catch (error) {
         console.error("Update appointment error:", error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: "Server error while updating appointment"
+            message: error.message || "Server error while updating appointment"
         });
     }
 };
@@ -157,25 +116,14 @@ const updateAppointment = async (req, res, next) => {
 // Delete Appointment
 const deleteAppointment = async (req, res, next) => {
     try {
-        const appointment = await Appointment.findByIdAndDelete(req.params.id);
-
-        if (!appointment) {
-            return res.status(404).json({
-                success: false,
-                message: "Appointment not found"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: "Appointment deleted successfully"
-        });
+        const result = await AppointmentService.deleteAppointment(req.params.id);
+        res.status(200).json(result);
 
     } catch (error) {
         console.error("Delete appointment error:", error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: "Server error while deleting appointment"
+            message: error.message || "Server error while deleting appointment"
         });
     }
 };

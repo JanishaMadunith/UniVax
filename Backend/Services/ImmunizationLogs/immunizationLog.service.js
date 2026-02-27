@@ -1,4 +1,4 @@
-const ImmunizationLog = require("../../Model/Sajith/immunizationLog.model.js");
+const ImmunizationLog = require("../../Model/ImmunizationLogs/immunizationLog.model.js");
 const axios = require('axios');  // For third-party API
 
 class ImmunizationLogService {
@@ -16,8 +16,8 @@ class ImmunizationLogService {
   }
 
   async getLogs(userId, role) {
-    const query = role === 'admin' ? {} : { userId };  // Admins see all, users see own
-    return await ImmunizationLog.find(query).populate('userId vaccineId');  // Populate references for integration
+    const query = role === 'Admin' ? {} : { userId };  // Admins see all, users see own
+    return await ImmunizationLog.find(query);  // Populate references for integration
   }
 
   async getLogById(id) {

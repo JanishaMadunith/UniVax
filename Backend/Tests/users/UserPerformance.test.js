@@ -1,7 +1,7 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const server = require('../../server');
-const User = require('../../Model/Tharusha/UserModel');
+const User = require('../../Model/users/UserModel');
 
 const API_PREFIX = '/users';
 

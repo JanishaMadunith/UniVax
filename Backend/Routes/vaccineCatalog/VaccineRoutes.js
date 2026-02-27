@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const vaccineController = require('../../Controllers/Dillon/VaccineController');
+const vaccineController = require('../../Controllers/vaccineCatalog/VaccineController');
 
 // Validation middleware (you can move this to a separate file)
 const validateVaccine = (req, res, next) => {
