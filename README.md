@@ -8,13 +8,12 @@ The backend is built with Express.js (Node.js) and MongoDB, structured into modu
 
 The frontend is built with React (using hooks/Context API for state management), consuming the backend APIs. UI/UX uses Tailwind CSS for responsive design, with session management via localStorage/JWT.
 
-This repo follows best practices, including Docker for microservices-like deployment of components for scalability and isolation.
 
 Group Members:
-- [Your Name] (Feedback/Ticketing Component)
-- [Member 2] (Vaccine Catalog & Scheduling)
-- [Member 3] (Appointment Management)
-- [Member 4] (User Management & Auth)
+- IT23401662 -Samarathunga J.M (Appointments & Clinics Management)
+- IT23174658 -Gunaweera T.C (User Management & Auth)
+- IT23279698 -J.D Jayatilake (Vaccine Catalog Management)
+- IT23400290 -W.A.S Tharaka (Immunization Logs Management)
 
 ## Technologies Used
 
@@ -33,41 +32,12 @@ Group Members:
 - Docker (optional for microservices)
 
 ### Step-by-Step Guide
-1. **Clone the Repository**:
-   ```
-   git clone https://github.com/your-group-repo/vaccination-tracker.git
-   cd vaccination-tracker
-   ```
-
-2. **Install Dependencies**:
+1. **Install Dependencies**:
    - Backend: `cd backend && npm install`
-   - Frontend: `cd frontend && npm install`
 
-3. **Configure Environment Variables**:
-   Create `.env` files in backend and frontend roots.
-   - Backend `.env` example:
-     ```
-     MONGO_URI=mongodb://localhost:27017/vaccination-db  # Or Atlas URI
-     JWT_SECRET=your-secret-key
-     TWILIO_SID=your-twilio-sid
-     TWILIO_TOKEN=your-twilio-token
-     TWILIO_NUMBER=+1234567890
-     PORT=3000
-     ```
-   - Frontend `.env` example:
-     ```
-     REACT_APP_API_URL=http://localhost:3000/api
-     ```
-
-4. **Run Locally (Without Docker)**:
+2. **Run Locally (Without Docker)**:
    - Start MongoDB (if local: `mongod`).
-   - Backend: `cd backend && npm start` (runs on http://localhost:3000).
-   - Frontend: `cd frontend && npm start` (runs on http://localhost:3000).
-
-5. **Run with Docker (Microservices Mode)**:
-   - Ensure Docker is running.
-   - Build and start: `docker-compose up --build`.
-   - Access: Backend services on exposed ports (e.g., feedback on 3001), Frontend manually or integrate.
+   - Backend: `cd backend && npm start` (runs on http://localhost:5001).
 
 ## Running the Application
 
@@ -77,59 +47,72 @@ Group Members:
 
 ## API Endpoint Documentation
 
-All endpoints follow REST standards with HTTP methods and status codes. Authentication: JWT in `Authorization: Bearer <token>` header (from `/auth/login`).
+All endpoints follow REST standards with HTTP methods and status codes. Authentication: JWT in `Authorization: Bearer <token>` header (from `/api/V1/users/login`).
 
 ### User Management Component
 | Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
 |----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/users/register | POST | Create user | { "name": "John", "age": 30, "phn": "12345", "role": "user", "password": "pass" } | { "id", "name", "token" } | None |
-| /api/users | GET | List users (admin) | - (Filters: ?age=30&search=John) | Array of users | Admin |
-| /api/users/:id | GET | Get profile | - | User object | User/Admin |
-| /api/users/:id | PUT | Update profile | { "name": "Updated" } | Updated user | User/Admin |
-| /api/auth/login | POST | Login | { "phn": "12345", "password": "pass" } | { "token" } | None |
+| /api/V1/users/register | POST | Create user | { "name": "John", "age": 30, "phn": "12345", "role": "user", "password": "pass" } | { "id", "name", "token" } | None |
+| /api/V1/users | GET | List users (admin) | - (Filters: ?age=30&search=John) | Array of users | Admin |
+| /api/V1/users/:id | GET | Get profile | - | User object | User/Admin |
+| /api/V1/users/profile | PUT | Update own profile | { "name": "Updated" } | Updated user | User/Admin |
+| /api/V1/users/:id | PUT | Update user by ID | { "name": "Updated" } | Updated user | User/Admin |
+| /api/V1/users/login | POST | Login | { "phn": "12345", "password": "pass" } | { "token" } | None |
 
 Third-party: Twilio for OTP during registration.
 
-### Vaccine Catalog & Scheduling Component
+### Vaccine Catalog Component
 | Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
 |----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/vaccines | POST | Create vaccine | { "name": "COVID-19", "dosesRequired": 2 } | Vaccine object | Admin |
-| /api/vaccines | GET | List vaccines (search/filter: ?ageGroup=adult) | - | Array with pagination | All |
-| /api/vaccines/:id | GET | Get details | - | Vaccine object | All |
-| /api/vaccines/:id | PUT | Update | { "description": "Updated" } | Updated vaccine | Admin |
-| /api/schedules/:userId | GET | Generate schedule | - | Personalized plan | User |
+| /api/V1/vaccines | POST | Create vaccine | { "name": "COVID-19", "dosesRequired": 2 } | Vaccine object | Admin |
+| /api/V1/vaccines | GET | List vaccines (search/filter: ?ageGroup=adult) | - | Array with pagination | All |
+| /api/V1/vaccines/:id | GET | Get details | - | Vaccine object | All |
+| /api/V1/vaccines/:id | PUT | Update | { "description": "Updated" } | Updated vaccine | Admin |
+| /api/V1/doses/vaccine/:vaccineId | POST | Create dose | { "doseNumber": 1, "minAge": { "value": 0 } } | Dose object | Admin |
+| /api/V1/doses/vaccine/:vaccineId | GET | Get vaccine doses | - | Array of doses | All |
+| /api/V1/doses/:id | GET | Get dose details | - | Dose object | All |
+| /api/V1/doses/:id | PUT | Update dose | { "doseNumber": 1 } | Updated dose | Admin |
+| /api/schedules/:userId | GET | Generate schedule | - | Personalized plan | User *(Not yet implemented)* |
 
 Third-party: CDC API for vaccine details.
 
 ### Appointment Management Component
 | Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
 |----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/appointments | POST | Book appointment | { "vaccineId": "id", "date": "2026-03-01" } | Appointment object | User |
-| /api/appointments | GET | List (pagination: ?page=1&status=pending) | - | Array | User/Admin |
-| /api/appointments/:id | GET | View details | - | Appointment object | User/Admin |
-| /api/appointments/:id | PUT | Update/cancel | { "status": "cancelled" } | Updated appointment | User/Admin |
-| /api/appointments/:id | DELETE | Delete | - | { "message": "Deleted" } | Admin |
+| /api/V1/appointments/create | POST | Book appointment | { "vaccineId": "id", "date": "2026-03-01" } | Appointment object | Patient |
+| /api/V1/appointments | GET | List (pagination: ?page=1&status=pending) | - | Array | Admin |
+| /api/V1/appointments/:id | GET | View details | - | Appointment object | Patient/Doctor/Admin |
+| /api/V1/appointments/:id | PUT | Update/cancel | { "status": "cancelled" } | Updated appointment | Patient/Admin |
+| /api/V1/appointments/:id | DELETE | Delete | - | { "message": "Deleted" } | Patient/Admin |
+| /api/V1/clinics/create | POST | Create clinic | { "name": "Clinic A", "location": "Address" } | Clinic object | Admin |
+| /api/V1/clinics | GET | List clinics | - | Array of clinics | Patient/Doctor/Admin |
+| /api/V1/clinics/:id | GET | Get clinic details | - | Clinic object | Patient/Doctor/Admin |
+| /api/V1/clinics/:id | PUT | Update clinic | { "name": "Updated" } | Updated clinic | Admin |
+| /api/V1/clinics/:id | DELETE | Delete clinic | - | { "message": "Deleted" } | Admin |
 
 Third-party: Google Calendar/Twilio for reminders.
 
 ### Immunization Log & Records Component
 | Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
 |----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/logs | POST | Create log | { "vaccineId": "id", "dateAdministered": "2026-02-25" } | Log object | Doctor/Admin |
-| /api/logs | GET | List history (search: ?date=2026-02) | - | Array | User/Admin |
-| /api/logs/:id | GET | View log | - | Log with certificate | User/Admin |
-| /api/logs/:id | PUT | Update notes | { "notes": "No side effects" } | Updated log | Doctor/Admin |
+| /api/V1/logs | POST | Create log | { "vaccineId": "id", "dateAdministered": "2026-02-25" } | Log object | Doctor/Patient/Admin |
+| /api/V1/logs | GET | List history (search: ?date=2026-02) | - | Array | Patient/Doctor/Admin |
+| /api/V1/logs/:id | GET | View log | - | Log with certificate | Patient/Doctor/Admin |
+| /api/V1/logs/:id | PUT | Update notes | { "notes": "No side effects" } | Updated log | Doctor/Admin |
+| /api/V1/logs/:id | DELETE | Delete log | - | { "message": "Deleted" } | Admin |
 
 Third-party: PubChem for side-effect info.
 
 ### Feedback/Ticketing System Component
+**Status**: *Not yet implemented*
+
 | Endpoint | Method | Description | Request Body/Example | Response Format | Auth Requirements |
 |----------|--------|-------------|----------------------|-----------------|-------------------|
-| /api/feedback | POST | Create ticket | { "title": "Side Effect", "description": "Headache after shot" } | Ticket object | User/Doctor |
-| /api/feedback | GET | List tickets (filter: ?status=open) | - | Array | User/Admin |
-| /api/feedback/:id | GET | View ticket | - | Ticket object | User/Admin |
-| /api/feedback/:id | PUT | Update/response | { "status": "resolved", "response": "Advised rest" } | Updated ticket | Doctor/Admin |
-| /api/feedback/:id | DELETE | Delete | - | { "message": "Deleted" } | Admin |
+| /api/V1/feedback | POST | Create ticket | { "title": "Side Effect", "description": "Headache after shot" } | Ticket object | User/Doctor |
+| /api/V1/feedback | GET | List tickets (filter: ?status=open) | - | Array | User/Admin |
+| /api/V1/feedback/:id | GET | View ticket | - | Ticket object | User/Admin |
+| /api/V1/feedback/:id | PUT | Update/response | { "status": "resolved", "response": "Advised rest" } | Updated ticket | Doctor/Admin |
+| /api/V1/feedback/:id | DELETE | Delete | - | { "message": "Deleted" } | Admin |
 
 Third-party: Twilio for SMS notifications on updates.
 
@@ -147,44 +130,8 @@ Error Handling: Standard codes (400 Bad Request, 401 Unauthorized, 404 Not Found
 - Live URL: https://vaccination-backend.onrender.com
 - Screenshots: [Deployment Success Screenshot] (add image link).
 
-### Frontend Deployment
-- Platform: Vercel.
-- Setup Steps:
-  1. Create Vercel account.
-  2. Import GitHub repo > Deploy.
-  3. Add env var: REACT_APP_API_URL.
-- Live URL: https://vaccination-tracker.vercel.app
-- Screenshots: [Deployment Success Screenshot] (add image link).
-
 Environment Variables Used: MONGO_URI, JWT_SECRET, TWILIO_SID (backend); REACT_APP_API_URL (frontend).
-
-## Testing Instruction Report
-
-### 1. Unit Testing
-- Tools: Jest.
-- Setup/Execution: `cd backend && npm test` (runs unit tests for services/controllers).
-- Environment: Node.js local.
-- Example: Tests isolation (e.g., mock Mongoose for feedback creation).
-
-### 2. Integration Testing
-- Tools: Supertest.
-- Setup/Execution: `cd backend && npm run test:integration` (tests API-DB interactions, e.g., POST /feedback with auth).
-- Environment: MongoDB test DB (set TEST_MONGO_URI in .env).
-
-### 3. Performance Testing
-- Tools: Artillery.io.
-- Setup/Execution: Install globally (`npm i -g artillery`), run `artillery run performance.yml` (script: 10 users, 20 requests to /api/feedback).
-- Environment: Local or deployed URL.
-- Config Details: performance.yml example:
-  ```
-  config:
-    target: 'http://localhost:3000'
-  scenarios:
-    - flow:
-      - get: { url: '/api/feedback' }
-  ```
 
 ## Contributors
 - Group project for SE3040 - 2026.
 
-For issues, create a GitHub issue or submit a feedback ticket in the app!
