@@ -17,7 +17,7 @@ const createClinic = async (req, res) => {
             closeTime
         } = req.body;
 
-        // Validation
+        
         if (!clinicName || !address || !city || !district || !phone || !email ||
             !clinicType || !openDays || !openTime || !closeTime) {
             return res.status(400).json({
