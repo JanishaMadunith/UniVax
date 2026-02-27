@@ -16,8 +16,8 @@ class ImmunizationLogService {
   }
 
   async getLogs(userId, role) {
-    const query = role === 'admin' ? {} : { userId };  // Admins see all, users see own
-    return await ImmunizationLog.find(query).populate('userId vaccineId');  // Populate references for integration
+    const query = role === 'Admin' ? {} : { userId };  // Admins see all, users see own
+    return await ImmunizationLog.find(query);  // Populate references for integration
   }
 
   async getLogById(id) {
