@@ -5,9 +5,9 @@ const authMiddleware = require('../../middlewares/auth.middleware.js');  // Plac
 
 // Protected routes
 router.post('/', authMiddleware(['Doctor','Patient', 'Admin']), createLog);  // Only doctors/admins create
-router.get('/', authMiddleware(['Patient', 'Doctor', 'Admin']), getLogs);
-router.get('/:id', authMiddleware(['Patient', 'Doctor', 'Admin']), getLogById);
+router.get('/', authMiddleware(['Patient', 'Doctor', 'Admin','Official']), getLogs);
+router.get('/:id', authMiddleware(['Patient', 'Doctor', 'Admin','Official']), getLogById);
 router.put('/:id', authMiddleware(['Doctor', 'Admin']), updateLog);
-router.delete('/:id', authMiddleware(['Admin']), deleteLog);  // Only admins delete
+router.delete('/:id', authMiddleware(['Admin','Official']), deleteLog);  // Only admins delete
 
 module.exports = router;
