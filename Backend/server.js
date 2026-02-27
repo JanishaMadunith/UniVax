@@ -1,10 +1,13 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
-const userRoutes = require("./Routes/Tharusha/UserRoutes");
-const vaccineRoutes = require("./Routes/Dillon/VaccineRoutes");
-const doseRoutes = require("./Routes/Dillon/DoseRoutes");
-const appointmentRoutes = require("./Routes/Janeesha/AppointmentRoutes");
+const userRoutes = require("./Routes/users/UserRoutes");
+const vaccineRoutes = require("./Routes/vaccineCatalog/VaccineRoutes");
+const doseRoutes = require("./Routes/vaccineCatalog/DoseRoutes");
+const appointmentRoutes = require("./Routes/Appointment/AppointmentRoutes");
+const clinicRoutes = require("./Routes/Appointment/ClinicRoutes");
+const authMiddleware = require("./middlewares/auth.middleware");  // Placeholder for JWT/role check
+const immunizationLogRoutes = require("./Routes/ImmunizationLogs/immunizationLog.routes");  // New route for immunization logs
 
 const app = express();
 
@@ -12,10 +15,12 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use("/users", userRoutes);
-app.use("/vaccines", vaccineRoutes);
-app.use("/doses", doseRoutes);
-app.use("/appointments", appointmentRoutes);
+app.use("/api/V1/users", userRoutes);
+app.use("/api/V1/vaccines", vaccineRoutes);
+app.use("/api/V1/doses", doseRoutes);
+app.use("/api/V1/appointments", appointmentRoutes);
+app.use("/api/V1/clinics", clinicRoutes);
+app.use("/api/V1/logs",immunizationLogRoutes)  // Register immunization log routes
 
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI;
