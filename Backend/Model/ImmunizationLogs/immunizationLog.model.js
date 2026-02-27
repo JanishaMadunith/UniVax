@@ -4,12 +4,12 @@ const axios = require('axios');
 const immunizationLogSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',  // Reference to User model
+    ref: 'UserModel',  // Reference to User model (matches UserModel.js export)
     required: true,
   },
   vaccineId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vaccine',  // Reference to Vaccine model
+    ref: 'VaccineProduct',  // Reference to Vaccine model
     required: true,
   },
   dateAdministered: {

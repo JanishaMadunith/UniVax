@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const doseController = require('../../Controllers/vaccineCatalog/DoseController');
+const authMiddleware = require("../../middlewares/auth.middleware"); 
 
 // Validation middleware for doses
 const validateDose = (req, res, next) => {
@@ -26,11 +27,11 @@ const validateDose = (req, res, next) => {
 };
 
 // Dose routes
-router.post('/vaccine/:vaccineId', validateDose, doseController.createDose);
-router.get('/vaccine/:vaccineId', doseController.getVaccineDoses);
-router.get('/:id', doseController.getDoseById);
-router.put('/:id', validateDose, doseController.updateDose);
-router.delete('/:id', doseController.deleteDose);
-router.post('/calculate', doseController.calculateDueDate);
+router.post('/vaccine/:vaccineId',authMiddleware(['Doctor', 'Admin']),validateDose, doseController.createDose);
+router.get('/vaccine/:vaccineId',authMiddleware(['Patient', 'Doctor', 'Admin']), doseController.getVaccineDoses);
+router.get('/:id', authMiddleware(['Patient', 'Doctor', 'Admin']), doseController.getDoseById);
+router.put('/:id', authMiddleware(['Doctor', 'Admin']), validateDose, doseController.updateDose);
+router.delete('/:id', authMiddleware(['Doctor', 'Admin']), doseController.deleteDose);
+router.post('/calculate', authMiddleware(['Doctor', 'Admin']),doseController.calculateDueDate);
 
 module.exports = router;

@@ -1,35 +1,14 @@
-const VaccineProduct = require('../../Model/vaccineCatalog/VaccineModel');
-const DoseRequirement = require('../../Model/vaccineCatalog/DoseModel');
+const vaccineService = require('../../Services/vaccineCatalog/VaccineService');
+const doseService = require('../../Services/vaccineCatalog/DoseService');
 
 // @desc    CREATE a new vaccine
 // @route   POST /api/vaccines
 exports.createVaccine = async (req, res) => {
   try {
-    // Check if vaccine with same CVX code exists
-    const existingVaccine = await VaccineProduct.findOne({ 
-      cvxCode: req.body.cvxCode 
-    });
-    
-    if (existingVaccine) {
-      return res.status(400).json({
-        success: false,
-        error: 'Vaccine with this CVX code already exists'
-      });
-    }
-
-    const vaccine = await VaccineProduct.create({
-      ...req.body,
-      createdBy: req.user?.id || 'system',
-      version: 1
-    });
-
-    res.status(201).json({
-      success: true,
-      data: vaccine,
-      message: 'Vaccine created successfully'
-    });
+    const result = await vaccineService.createVaccine(req.body, req.user?.id);
+    res.status(201).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -40,49 +19,13 @@ exports.createVaccine = async (req, res) => {
 // @route   GET /api/vaccines
 exports.getAllVaccines = async (req, res) => {
   try {
-    const { status, manufacturer, search, region } = req.query;
-    const query = {};
-
-    // Filter by status
-    if (status) {
-      query.status = status;
-    }
-
-    // Filter by manufacturer
-    if (manufacturer) {
-      query.manufacturer = manufacturer;
-    }
-
-    // Search by name or generic name
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { genericName: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    // Filter by approved region
-    if (region) {
-      query['approvedRegions.country'] = region;
-    }
-
-    const vaccines = await VaccineProduct.find(query)
-      .populate({
-        path: 'doseRequirements',
-        match: { status: 'active' },
-        select: 'doseNumber minAge intervalFromPrevious'
-      })
-      .sort({ name: 1 });
-
-    res.status(200).json({
-      success: true,
-      count: vaccines.length,
-      data: vaccines
-    });
+    const result = await vaccineService.getAllVaccines(req.query);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      data: error.data || []
     });
   }
 };
@@ -91,22 +34,10 @@ exports.getAllVaccines = async (req, res) => {
 // @route   GET /api/vaccines/:id
 exports.getVaccineById = async (req, res) => {
   try {
-    const vaccine = await VaccineProduct.findById(req.params.id)
-      .populate('doseRequirements');
-
-    if (!vaccine) {
-      return res.status(404).json({
-        success: false,
-        error: 'Vaccine not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: vaccine
-    });
+    const result = await vaccineService.getVaccineById(req.params.id);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -117,66 +48,10 @@ exports.getVaccineById = async (req, res) => {
 // @route   PUT /api/vaccines/:id
 exports.updateVaccine = async (req, res) => {
   try {
-    const oldVaccine = await VaccineProduct.findById(req.params.id);
-    
-    if (!oldVaccine) {
-      return res.status(404).json({
-        success: false,
-        error: 'Vaccine not found'
-      });
-    }
-
-    // If status change or major update, create new version
-    if (req.body.status !== oldVaccine.status || 
-        req.body.totalDoses !== oldVaccine.totalDoses) {
-      
-      // Archive old version
-      await VaccineProduct.findByIdAndUpdate(req.params.id, {
-        status: 'archived',
-        validUntil: new Date()
-      });
-
-      // Create new version
-      const newVaccine = await VaccineProduct.create({
-        ...oldVaccine.toObject(),
-        ...req.body,
-        _id: undefined,
-        version: oldVaccine.version + 1,
-        validFrom: new Date(),
-        validUntil: null,
-        status: req.body.status || 'active',
-        lastModifiedBy: req.user?.id || 'system',
-        updateReason: req.body.updateReason || 'Manual update'
-      });
-
-      return res.status(200).json({
-        success: true,
-        data: newVaccine,
-        message: 'Vaccine updated with new version',
-        previousVersion: oldVaccine.version
-      });
-    }
-
-    // Minor update (no version change)
-    const vaccine = await VaccineProduct.findByIdAndUpdate(
-      req.params.id,
-      {
-        ...req.body,
-        lastModifiedBy: req.user?.id || 'system'
-      },
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    res.status(200).json({
-      success: true,
-      data: vaccine,
-      message: 'Vaccine updated successfully'
-    });
+    const result = await vaccineService.updateVaccine(req.params.id, req.body, req.user?.id);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -187,41 +62,11 @@ exports.updateVaccine = async (req, res) => {
 // @route   DELETE /api/vaccines/:id
 exports.deleteVaccine = async (req, res) => {
   try {
-    const vaccine = await VaccineProduct.findById(req.params.id);
-
-    if (!vaccine) {
-      return res.status(404).json({
-        success: false,
-        error: 'Vaccine not found'
-      });
-    }
-
-    // Check if vaccine has associated dose requirements
-    const doseCount = await DoseRequirement.countDocuments({ 
-      vaccineId: req.params.id,
-      status: 'active'
-    });
-
-    if (doseCount > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Cannot delete vaccine with active dose requirements. Archive doses first.'
-      });
-    }
-
-    // Soft delete
-    vaccine.status = 'discontinued';
-    vaccine.validUntil = new Date();
-    vaccine.discontinuedReason = req.body.reason || 'Manual discontinuation';
-    await vaccine.save();
-
-    res.status(200).json({
-      success: true,
-      data: {},
-      message: 'Vaccine discontinued successfully'
-    });
+    const reason = req.body?.reason;
+    const result = await vaccineService.deleteVaccine(req.params.id, reason);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -232,32 +77,10 @@ exports.deleteVaccine = async (req, res) => {
 // @route   GET /api/vaccines/:id/history
 exports.getVaccineHistory = async (req, res) => {
   try {
-    const vaccine = await VaccineProduct.findById(req.params.id);
-    
-    if (!vaccine) {
-      return res.status(404).json({
-        success: false,
-        error: 'Vaccine not found'
-      });
-    }
-
-    // Find all versions by name or CVX code
-    const history = await VaccineProduct.find({
-      $or: [
-        { name: vaccine.name },
-        { cvxCode: vaccine.cvxCode }
-      ]
-    })
-    .sort({ version: -1 })
-    .select('name version status validFrom validUntil updateReason');
-
-    res.status(200).json({
-      success: true,
-      currentVersion: vaccine.version,
-      history: history
-    });
+    const result = await vaccineService.getVaccineHistory(req.params.id);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -268,42 +91,10 @@ exports.getVaccineHistory = async (req, res) => {
 // @route   POST /api/vaccines/:vaccineId/doses
 exports.createDose = async (req, res) => {
   try {
-    const vaccine = await VaccineProduct.findById(req.params.vaccineId);
-    
-    if (!vaccine) {
-      return res.status(404).json({
-        success: false,
-        error: 'Vaccine not found'
-      });
-    }
-
-    // Check if dose number already exists
-    const existingDose = await DoseRequirement.findOne({
-      vaccineId: req.params.vaccineId,
-      doseNumber: req.body.doseNumber,
-      status: 'active'
-    });
-
-    if (existingDose) {
-      return res.status(400).json({
-        success: false,
-        error: `Dose ${req.body.doseNumber} already exists for this vaccine`
-      });
-    }
-
-    const dose = await DoseRequirement.create({
-      ...req.body,
-      vaccineId: req.params.vaccineId,
-      version: 1
-    });
-
-    res.status(201).json({
-      success: true,
-      data: dose,
-      message: 'Dose requirement created successfully'
-    });
+    const result = await doseService.createDose(req.params.vaccineId, req.body);
+    res.status(201).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -314,20 +105,13 @@ exports.createDose = async (req, res) => {
 // @route   GET /api/vaccines/:vaccineId/doses
 exports.getVaccineDoses = async (req, res) => {
   try {
-    const doses = await DoseRequirement.find({
-      vaccineId: req.params.vaccineId,
-      status: { $ne: 'superseded' }
-    }).sort({ doseNumber: 1 });
-
-    res.status(200).json({
-      success: true,
-      count: doses.length,
-      data: doses
-    });
+    const result = await doseService.getVaccineDoses(req.params.vaccineId);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      data: error.data || []
     });
   }
 };
@@ -336,58 +120,10 @@ exports.getVaccineDoses = async (req, res) => {
 // @route   PUT /api/doses/:id
 exports.updateDose = async (req, res) => {
   try {
-    const oldDose = await DoseRequirement.findById(req.params.id);
-    
-    if (!oldDose) {
-      return res.status(404).json({
-        success: false,
-        error: 'Dose requirement not found'
-      });
-    }
-
-    // If significant change, create new version
-    if (req.body.minAge || req.body.intervalFromPrevious) {
-      // Mark old version as superseded
-      await DoseRequirement.findByIdAndUpdate(req.params.id, {
-        status: 'superseded',
-        validUntil: new Date()
-      });
-
-      // Create new version
-      const newDose = await DoseRequirement.create({
-        ...oldDose.toObject(),
-        ...req.body,
-        _id: undefined,
-        version: oldDose.version + 1,
-        validFrom: new Date(),
-        validUntil: null,
-        status: 'active'
-      });
-
-      return res.status(200).json({
-        success: true,
-        data: newDose,
-        message: 'Dose requirement updated with new version'
-      });
-    }
-
-    // Minor update
-    const dose = await DoseRequirement.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    res.status(200).json({
-      success: true,
-      data: dose,
-      message: 'Dose requirement updated'
-    });
+    const result = await doseService.updateDose(req.params.id, req.body);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -398,27 +134,10 @@ exports.updateDose = async (req, res) => {
 // @route   DELETE /api/doses/:id
 exports.deleteDose = async (req, res) => {
   try {
-    const dose = await DoseRequirement.findById(req.params.id);
-
-    if (!dose) {
-      return res.status(404).json({
-        success: false,
-        error: 'Dose requirement not found'
-      });
-    }
-
-    // Soft delete
-    dose.status = 'superseded';
-    dose.validUntil = new Date();
-    await dose.save();
-
-    res.status(200).json({
-      success: true,
-      data: {},
-      message: 'Dose requirement deleted (soft delete)'
-    });
+    const result = await doseService.deleteDose(req.params.id);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
@@ -430,65 +149,10 @@ exports.deleteDose = async (req, res) => {
 exports.calculateDueDate = async (req, res) => {
   try {
     const { vaccineId, patientAgeMonths, lastDoseDate, doseNumber } = req.body;
-
-    const dose = await DoseRequirement.findOne({
-      vaccineId,
-      doseNumber: doseNumber || 1,
-      status: 'active'
-    });
-
-    if (!dose) {
-      return res.status(404).json({
-        success: false,
-        error: 'Dose requirements not found'
-      });
-    }
-
-    let dueDate = null;
-    let status = 'eligible';
-
-    // First dose - based on age
-    if (doseNumber === 1 || !lastDoseDate) {
-      if (patientAgeMonths >= dose.minAge.value) {
-        dueDate = new Date();
-      } else {
-        // Calculate future date when age requirement will be met
-        const birthDate = new Date();
-        birthDate.setMonth(birthDate.getMonth() - patientAgeMonths);
-        dueDate = new Date(birthDate);
-        dueDate.setMonth(dueDate.getMonth() + dose.minAge.value);
-        status = 'future';
-      }
-    } 
-    // Subsequent doses - based on interval
-    else if (lastDoseDate) {
-      const lastDose = new Date(lastDoseDate);
-      dueDate = new Date(lastDose);
-      
-      if (dose.intervalFromPrevious.exactDays) {
-        dueDate.setDate(dueDate.getDate() + dose.intervalFromPrevious.exactDays);
-      } else if (dose.intervalFromPrevious.minDays) {
-        dueDate.setDate(dueDate.getDate() + dose.intervalFromPrevious.minDays);
-      }
-
-      // Check if overdue
-      if (new Date() > dueDate) {
-        status = 'overdue';
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        dueDate,
-        status,
-        doseNumber: dose.doseNumber,
-        minAgeRequired: dose.minAge,
-        interval: dose.intervalFromPrevious
-      }
-    });
+    const result = await doseService.calculateDueDate(vaccineId, patientAgeMonths, lastDoseDate, doseNumber);
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message
     });
