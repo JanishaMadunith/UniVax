@@ -203,8 +203,8 @@ const updateVaccine = async (vaccineId, updateData, userId) => {
   }
 };
 
-// Delete (soft delete) vaccine
-const deleteVaccine = async (vaccineId, reason = 'Manual discontinuation') => {
+// Delete vaccine (hard delete) - cascade deletes associated doses
+const deleteVaccine = async (vaccineId) => {
   try {
     const vaccine = await VaccineProduct.findById(vaccineId);
 
@@ -215,28 +215,17 @@ const deleteVaccine = async (vaccineId, reason = 'Manual discontinuation') => {
       };
     }
 
-    // Check if vaccine has associated dose requirements
-    const doseCount = await DoseRequirement.countDocuments({ 
-      vaccineId: vaccineId,
-      status: 'active'
+    // Delete all associated dose requirements (cascade delete)
+    await DoseRequirement.deleteMany({ 
+      vaccineId: vaccineId
     });
 
-    if (doseCount > 0) {
-      throw {
-        status: 400,
-        message: 'Cannot delete vaccine with active dose requirements. Archive doses first.'
-      };
-    }
-
-    // Soft delete
-    vaccine.status = 'discontinued';
-    vaccine.validUntil = new Date();
-    vaccine.discontinuedReason = reason;
-    await vaccine.save();
+    // Hard delete - permanently remove vaccine from database
+    await VaccineProduct.findByIdAndDelete(vaccineId);
 
     return {
       success: true,
-      message: 'Vaccine discontinued successfully',
+      message: 'Vaccine and associated doses deleted successfully',
       data: {}
     };
   } catch (error) {

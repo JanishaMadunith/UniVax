@@ -188,7 +188,7 @@ const updateDose = async (doseId, updateData) => {
   }
 };
 
-// Delete (soft delete) dose requirement
+// Delete dose requirement (hard delete)
 const deleteDose = async (doseId) => {
   try {
     const dose = await DoseRequirement.findById(doseId);
@@ -200,14 +200,12 @@ const deleteDose = async (doseId) => {
       };
     }
 
-    // Soft delete
-    dose.status = 'superseded';
-    dose.validUntil = new Date();
-    await dose.save();
+    // Hard delete - permanently remove from database
+    await DoseRequirement.findByIdAndDelete(doseId);
 
     return {
       success: true,
-      message: 'Dose requirement deleted (soft delete)',
+      message: 'Dose requirement deleted successfully',
       data: {}
     };
   } catch (error) {
