@@ -121,4 +121,5 @@ Environment Variables Used: MONGO_URI, JWT_SECRET, TWILIO_SID (backend); REACT_A
 
 ## Contributors
 - Group project for SE3040 - 2026.
+- SE 69 Y03.S02.
 
