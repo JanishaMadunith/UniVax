@@ -6,11 +6,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={<Home />} />
-        <Route path="/" element={<Map />} />
-        <Route path="/payment" element={<CardPayment />} />
+        <Route path="/" element={<SignUp />} />
         {/* Fallback */}
-        <Route path="*" element={<SignUp />} />
+        {/* <Route path="*" element={<SignUp />} /> */}
       </Routes>
     </Router>
   )
