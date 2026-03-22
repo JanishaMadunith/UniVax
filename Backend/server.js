@@ -1,6 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
+const cors = require("cors");
 const userRoutes = require("./Routes/users/UserRoutes");
 const vaccineRoutes = require("./Routes/vaccineCatalog/VaccineRoutes");
 const doseRoutes = require("./Routes/vaccineCatalog/DoseRoutes");
@@ -12,6 +13,12 @@ const immunizationLogRoutes = require("./Routes/ImmunizationLogs/immunizationLog
 const app = express();
 
 // Middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Routes
