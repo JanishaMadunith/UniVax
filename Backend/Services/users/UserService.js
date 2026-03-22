@@ -21,9 +21,6 @@ class UserService {
       throw new Error("All fields are required");
     }
 
-    if (password !== confirmPassword) {
-      throw new Error("Passwords do not match");
-    }
 
     if (password.length < 6) {
       throw new Error("Password must be at least 6 characters long");
