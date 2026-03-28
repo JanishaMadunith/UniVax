@@ -1,4 +1,3 @@
-// src/components/Login.jsx
 import React, { useState } from 'react';
 import { Mail, Lock, Shield, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -16,7 +15,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ---------------- VALIDATION ----------------
+  //  VALIDATION 
   const validateForm = () => {
     const newErrors = {};
 
@@ -32,7 +31,7 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ---------------- HANDLE CHANGE ----------------
+  // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -52,7 +51,7 @@ const Login = () => {
     }
   };
 
-  // ---------------- HANDLE SUBMIT ----------------
+  // HANDLE SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -78,9 +77,8 @@ const Login = () => {
       if (response.ok) {
         const user = data.user;
 
-        // 🔴 ROLE VALIDATION WITH INLINE ERROR
 
-        // Doctor/Admin without checkbox
+        // Warning for Doctor/Admin without checkbox
         if (!formData.isPrivilegedLogin && (user.role === 'Doctor' || user.role === 'Admin')) {
           const message = 'Please login according to your role (Doctor/Admin).';
           setErrors({ submit: message });
@@ -89,7 +87,7 @@ const Login = () => {
           return;
         }
 
-        // Patient with checkbox
+        // Warning for Patient with checkbox
         if (formData.isPrivilegedLogin && user.role === 'Patient') {
           const message = 'Please login as a Patient without selecting Doctor/Admin.';
           setErrors({ submit: message });
@@ -106,7 +104,7 @@ const Login = () => {
 
         toast.success('Login successful!');
 
-        // 🔵 ROLE-BASED REDIRECTION
+        // ROLE-BASED REDIRECTION
         switch (user.role) {
           case 'Patient':
             navigate('/patient/dashboard');
@@ -137,7 +135,6 @@ const Login = () => {
     }
   };
 
-  // ---------------- UI ----------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -154,7 +151,7 @@ const Login = () => {
           <p className="text-sm text-gray-500">Login to your account</p>
         </div>
 
-        {/* 🔴 INLINE ERROR (MAIN ONE YOU WANTED) */}
+        {/* INLINE ERROR */}
         {errors.submit && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center">
             <AlertCircle className="w-4 h-4 mr-2" />
