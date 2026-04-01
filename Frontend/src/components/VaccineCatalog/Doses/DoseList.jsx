@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, ChevronRight, AlertCircle, Loader, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { doseAPI } from '../../services/api';
+import { doseAPI } from '../../../services/api';
 import DoseForm from './DoseForm';
 import DoseDetail from './DoseDetail';
 

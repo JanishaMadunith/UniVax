@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Edit2, Trash2, History, AlertCircle } from 'lucide-react';
-import { vaccineAPI } from '../../services/api';
+import { vaccineAPI } from '../../../services/api';
 import DoseList from '../Doses/DoseList';
 
 const VaccineDetail = ({ vaccine, onBack, onEdit, onDelete }) => {

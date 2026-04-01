@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { vaccineAPI } from '../../services/api';
+import { vaccineAPI } from '../../../services/api';
 
 const VaccineForm = ({ vaccine = null, onClose }) => {
   const [formData, setFormData] = useState({
