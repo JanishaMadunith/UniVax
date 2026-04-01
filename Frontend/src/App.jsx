@@ -7,7 +7,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<VaccineCatalog />} />
+        <Route path="/" element={<SignUp />} />
         <Route path="/vaccines" element={<VaccineCatalog />} />
         {/* Fallback */}
         {/* <Route path="*" element={<SignUp />} /> */}
