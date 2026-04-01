@@ -9,25 +9,27 @@ const VaccineCatalog = () => {
   const [selectedVaccineName, setSelectedVaccineName] = useState(null);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Vaccine Catalog</h1>
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2">
+            Vaccine Catalog
+          </h1>
           <p className="text-gray-600">Manage vaccines and their dosing requirements</p>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-6 flex-wrap">
           <button
             onClick={() => {
               setActiveTab('vaccines');
               setSelectedVaccineId(null);
             }}
-            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition ${
+            className={`px-6 py-3 rounded-2xl font-medium flex items-center gap-2 transition shadow-md ${
               activeTab === 'vaccines'
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-blue-200'
             }`}
           >
             <Pill size={20} />
@@ -35,10 +37,10 @@ const VaccineCatalog = () => {
           </button>
           <button
             onClick={() => setActiveTab('doses')}
-            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition ${
+            className={`px-6 py-3 rounded-2xl font-medium flex items-center gap-2 transition shadow-md ${
               activeTab === 'doses'
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
             disabled={!selectedVaccineId}
             title={!selectedVaccineId ? 'Select a vaccine first' : ''}
@@ -52,7 +54,7 @@ const VaccineCatalog = () => {
         </div>
 
         {/* Content */}
-        <div className="bg-gray-50 rounded-lg p-6">
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-xl border border-gray-100">
           {activeTab === 'vaccines' && (
             <div>
               <VaccineList
