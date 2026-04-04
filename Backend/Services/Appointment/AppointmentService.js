@@ -137,8 +137,33 @@ const deleteAppointment = async (appointmentId) => {
     }
 };
 
+// Get Appointments by User Email Service
+const getAppointmentsByEmail = async (email) => {
+    try {
+        console.log('Service: Looking for appointments with email:', email);
+        const appointments = await Appointment.find({ email: email.toLowerCase() });
+        
+        console.log('Service: Found appointments count:', appointments.length);
+        console.log('Service: Appointments data:', appointments);
+
+        return {
+            success: true,
+            count: appointments.length,
+            data: appointments
+        };
+    } catch (error) {
+        console.error('Service error:', error);
+        throw {
+            status: 500,
+            message: "Server error while fetching user appointments",
+            error: error.message
+        };
+    }
+};
+
 exports.createAppointment = createAppointment;
 exports.getAllAppointments = getAllAppointments;
 exports.getAppointmentById = getAppointmentById;
 exports.updateAppointment = updateAppointment;
 exports.deleteAppointment = deleteAppointment;
+exports.getAppointmentsByEmail = getAppointmentsByEmail;

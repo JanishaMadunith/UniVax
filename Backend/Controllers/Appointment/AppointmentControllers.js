@@ -128,8 +128,36 @@ const deleteAppointment = async (req, res, next) => {
     }
 };
 
+// Get Appointments by User Email
+const getAppointmentsByEmail = async (req, res, next) => {
+    try {
+        const { email } = req.params;
+        
+        console.log('Getting appointments for email:', email);
+        
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+
+        const result = await AppointmentService.getAppointmentsByEmail(email);
+        console.log('Service result:', result);
+        res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Get user appointments error:", error);
+        res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Server error while fetching user appointments"
+        });
+    }
+};
+
 exports.createAppointment = createAppointment;
 exports.getAllAppointments = getAllAppointments;
 exports.getAppointmentById = getAppointmentById;
 exports.updateAppointment = updateAppointment;
 exports.deleteAppointment = deleteAppointment;
+exports.getAppointmentsByEmail = getAppointmentsByEmail;

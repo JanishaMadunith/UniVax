@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, Calendar, Clock, Syringe, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  User, Mail, Phone, Calendar, Clock, Syringe, AlertCircle, 
+  CheckCircle, XCircle, MapPin, ChevronRight, History, 
+  Calendar as CalendarIcon, Filter, ChevronDown
+} from 'lucide-react';
 import { toast } from 'react-toastify';
 import TopNavbar from './TopNavbar';
 
 const Appointments = () => {
+  // Get logged-in user email (you can get this from auth context/localStorage)
+  const [userEmail, setUserEmail] = useState('');
+  const [userAppointments, setUserAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [appointmentError, setAppointmentError] = useState('');
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -19,16 +28,137 @@ const Appointments = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch user email from localStorage/auth context on mount
+  useEffect(() => {
+    // Get user data from localStorage or your auth context
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const email = userData.email || '';
+    const fullName = userData.fullName || userData.name || '';
+    const token = localStorage.getItem('token');
+    
+    console.log('User data loaded:',  { email, fullName, token: !!token });
+    
+    setUserEmail(email);
+    
+    // Pre-fill form with user data
+    setFormData(prev => ({
+      ...prev,
+      email: email,
+      fullName: fullName
+    }));
+    
+    if (email) {
+      fetchUserAppointments(email);
+    } else {
+      console.warn('No email found in localStorage');
+    }
+  }, []);
+
+  // Fetch user's appointments
+  const fetchUserAppointments = async (email) => {
+    try {
+      setLoadingAppointments(true);
+      setAppointmentError('');
+      console.log('Fetching appointments for email:', email);
+      const token = localStorage.getItem('token');
+      console.log('Token present:', !!token);
+      
+      const response = await fetch(`http://localhost:5001/api/V1/appointments/user/${email}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      
+      console.log('Appointments response:', data);
+      
+      if (data.success) {
+        console.log('Setting appointments:', data.data);
+        setUserAppointments(Array.isArray(data.data) ? data.data : []);
+      } else {
+        console.warn('API returned success: false', data.message);
+        setAppointmentError(data.message || 'Failed to load appointments');
+        setUserAppointments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      setAppointmentError(`Error: ${error.message}`);
+      setUserAppointments([]);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  // Sample appointments for demo (remove this when backend is ready)
+  const getSampleAppointments = () => {
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + 5);
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - 10);
+    
+    return [
+      {
+        _id: '1',
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phone: '0712345678',
+        vaccineType: 'COVID-19',
+        doseNumber: 2,
+        ageGroup: 'adult',
+        appointmentDate: futureDate.toISOString(),
+        appointmentTime: '10:30 AM',
+        status: 'upcoming'
+      },
+      {
+        _id: '2',
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phone: '0712345678',
+        vaccineType: 'COVID-19',
+        doseNumber: 1,
+        ageGroup: 'adult',
+        appointmentDate: pastDate.toISOString(),
+        appointmentTime: '09:00 AM',
+        status: 'completed'
+      }
+    ];
+  };
+
+  // Filter appointments
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const upcomingAppointments = userAppointments
+    .filter(apt => {
+      if (!apt.appointmentDate) return false;
+      const aptDate = new Date(apt.appointmentDate);
+      aptDate.setHours(0, 0, 0, 0);
+      return aptDate >= today;
+    })
+    .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+  
+  const previousAppointments = userAppointments
+    .filter(apt => {
+      if (!apt.appointmentDate) return false;
+      const aptDate = new Date(apt.appointmentDate);
+      aptDate.setHours(0, 0, 0, 0);
+      return aptDate < today;
+    })
+    .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+
   // VALIDATION
   const validateForm = () => {
     const newErrors = {};
-
     Object.keys(formData).forEach(field => {
       if (!formData[field]) {
         newErrors[field] = 'This field is required';
       }
     });
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,16 +166,10 @@ const Appointments = () => {
   // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-
     if (errors.submit) {
       setErrors(prev => ({ ...prev, submit: '' }));
     }
@@ -54,19 +178,18 @@ const Appointments = () => {
   // SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) {
       toast.warning('Please fill all fields!');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const response = await fetch('http://localhost:5001/api/V1/appointments', {
+      const response = await fetch('http://localhost:5001/api/V1/appointments/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           ...formData,
@@ -75,11 +198,8 @@ const Appointments = () => {
       });
 
       const data = await response.json();
-
       if (response.ok) {
         toast.success('Appointment booked successfully!');
-
-        // RESET FORM
         setFormData({
           fullName: '',
           email: '',
@@ -90,18 +210,15 @@ const Appointments = () => {
           appointmentDate: '',
           appointmentTime: ''
         });
-
+        // Refresh appointments
+        fetchUserAppointments(userEmail);
       } else {
-        const message = data.message || 'Failed to book appointment';
-        toast.error(message);
-        setErrors({ submit: message });
+        toast.error(data.message || 'Failed to book appointment');
+        setErrors({ submit: data.message });
       }
-
     } catch (error) {
-      console.error(error);
-      const message = 'Network error. Please try again.';
-      toast.error(message);
-      setErrors({ submit: message });
+      toast.error('Network error. Please try again.');
+      setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -110,162 +227,376 @@ const Appointments = () => {
   return (
     <>
       <TopNavbar />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="flex justify-center items-center space-x-2 mb-2">
-              <Syringe className="w-7 h-7 text-green-600" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                Book Appointment
-              </span>
-            </div>
-            <p className="text-sm text-gray-500">Schedule your vaccination</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              Book Appointment
+            </h1>
+            <p className="text-gray-600 mt-2">Schedule your vaccination and manage your appointments</p>
           </div>
 
-          {/* INLINE ERROR */}
-          {errors.submit && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              {errors.submit}
-            </div>
-          )}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Side - Form (2/3 width) */}
+            <div className="lg:w-2/3">
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                {/* Form Header */}
+                <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 rounded-full p-2">
+                      <Syringe className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">Schedule Your Vaccination</h2>
+                      <p className="text-blue-100 text-sm mt-1">Fill in the details below to book your appointment</p>
+                    </div>
+                  </div>
+                </div>
 
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Form Body */}
+                <div className="p-8">
+                  {errors.submit && (
+                    <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+                      {errors.submit}
+                    </div>
+                  )}
 
-            {/* Full Name */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Full Name</label>
-              <div className="relative mt-1">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={`w-full pl-10 py-2.5 border rounded-xl ${errors.fullName ? 'border-red-300' : 'border-gray-200'}`}
-                />
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Full Name */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
+                            onChange={handleChange}
+                            placeholder="Enter your full name"
+                            readOnly
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-100 cursor-not-allowed ${
+                              errors.fullName ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                            }`}
+                          />
+                        </div>
+                        {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
+                      </div>
+
+                      {/* Email */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Email <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="your@email.com"
+                            readOnly
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-100 cursor-not-allowed ${
+                              errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                            }`}
+                          />
+                        </div>
+                        {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Phone Number <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder="071 234 5678"
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                              errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                            }`}
+                          />
+                        </div>
+                        {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                      </div>
+
+                      {/* Vaccine Type */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Vaccine Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          name="vaccineType"
+                          value={formData.vaccineType}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                            errors.vaccineType ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                          }`}
+                        >
+                          <option value="">Select Vaccine</option>
+                          <option value="COVID-19">COVID-19</option>
+                          <option value="Flu">Influenza (Flu)</option>
+                          <option value="HPV">HPV</option>
+                          <option value="Hepatitis B">Hepatitis B</option>
+                          <option value="MMR">MMR</option>
+                        </select>
+                        {errors.vaccineType && <p className="text-xs text-red-500 mt-1">{errors.vaccineType}</p>}
+                      </div>
+
+                      {/* Dose Number */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Dose Number <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          name="doseNumber"
+                          value={formData.doseNumber}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                            errors.doseNumber ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                          }`}
+                        >
+                          <option value="">Select Dose</option>
+                          <option value="1">Dose 1</option>
+                          <option value="2">Dose 2</option>
+                          <option value="3">Dose 3 (Booster)</option>
+                        </select>
+                        {errors.doseNumber && <p className="text-xs text-red-500 mt-1">{errors.doseNumber}</p>}
+                      </div>
+
+                      {/* Age Group */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Age Group <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          name="ageGroup"
+                          value={formData.ageGroup}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                            errors.ageGroup ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                          }`}
+                        >
+                          <option value="">Select Age Group</option>
+                          <option value="child">Child (0-12 years)</option>
+                          <option value="adult">Adult (13-59 years)</option>
+                          <option value="elder">Elder (60+ years)</option>
+                        </select>
+                        {errors.ageGroup && <p className="text-xs text-red-500 mt-1">{errors.ageGroup}</p>}
+                      </div>
+
+                      {/* Date */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Appointment Date <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="date"
+                            name="appointmentDate"
+                            value={formData.appointmentDate}
+                            onChange={handleChange}
+                            min={new Date().toISOString().split('T')[0]}
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                              errors.appointmentDate ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                            }`}
+                          />
+                        </div>
+                        {errors.appointmentDate && <p className="text-xs text-red-500 mt-1">{errors.appointmentDate}</p>}
+                      </div>
+
+                      {/* Time */}
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Appointment Time <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="time"
+                            name="appointmentTime"
+                            value={formData.appointmentTime}
+                            onChange={handleChange}
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                              errors.appointmentTime ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                            }`}
+                          />
+                        </div>
+                        {errors.appointmentTime && <p className="text-xs text-red-500 mt-1">{errors.appointmentTime}</p>}
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`w-full py-4 rounded-xl text-white font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        isSubmitting
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:scale-[1.01]'
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Booking...
+                        </>
+                      ) : (
+                        <>
+                          <Syringe className="w-5 h-5" />
+                          Book Appointment
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Email</label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full pl-10 py-2.5 border rounded-xl ${errors.email ? 'border-red-300' : 'border-gray-200'}`}
-                />
+            {/* Right Side - Appointments (1/3 width) */}
+            <div className="lg:w-1/3 space-y-6">
+              
+              {/* Upcoming Appointments */}
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-green-500 to-teal-500 px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="w-5 h-5 text-white" />
+                    <h3 className="text-white font-semibold text-lg">Upcoming Appointments</h3>
+                  </div>
+                </div>
+                <div className="p-5 max-h-96 overflow-y-auto">
+                  {loadingAppointments ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full w-8 h-8 border-b-2 border-green-500"></div>
+                    </div>
+                  ) : upcomingAppointments.length > 0 ? (
+                    <div className="space-y-4">
+                      {upcomingAppointments.map((apt) => (
+                        <div key={apt._id} className="border-l-4 border-green-500 bg-green-50 rounded-lg p-4 hover:shadow-md transition-all">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-800">{apt.vaccineType}</h4>
+                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">Upcoming</span>
+                          </div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(apt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3" />
+                            {apt.appointmentTime}
+                          </p>
+                          <p className="text-sm font-medium text-gray-700 mt-2">Dose {apt.doseNumber}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500">No upcoming appointments</p>
+                      <p className="text-xs text-gray-400 mt-1">Book your first appointment today!</p>
+                      {appointmentError && (
+                        <p className="text-xs text-red-500 mt-2">⚠️ Error: {appointmentError}</p>
+                      )}
+                      <div className="text-xs text-gray-500 mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                        <p className="font-semibold text-gray-700 mb-2">💡 Troubleshooting:</p>
+                        <ul className="text-left space-y-1">
+                          <li>• Make sure you're logged in with your account</li>
+                          <li>• Fill the form above and click "Book Appointment"</li>
+                          <li>• Appointments will appear in this section once created</li>
+                          <li>• Click the Debug Info below to check your email</li>
+                        </ul>
+                      </div>
+                      <details className="text-xs text-gray-600 mt-3 text-left bg-gray-50 p-3 rounded border border-gray-200">
+                        <summary className="cursor-pointer font-semibold text-gray-700">📋 Debug Info</summary>
+                        <div className="mt-2 space-y-1 font-mono text-xs">
+                          <p>Email: <span className="text-blue-600">{userEmail || '❌ Not loaded'}</span></p>
+                          <p>Appointments: <span className="text-blue-600">{userAppointments.length}</span></p>
+                          <p>Loading: <span className="text-blue-600">{loadingAppointments ? '⏳ Yes' : '✓ No'}</span></p>
+                          <p>Token: <span className="text-blue-600">{localStorage.getItem('token') ? '✓ Present' : '❌ Missing'}</span></p>
+                          <p className="text-gray-500 mt-2">Check browser console (F12) for detailed logs</p>
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Previous Appointments */}
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-white" />
+                    <h3 className="text-white font-semibold text-lg">Previous Appointments</h3>
+                  </div>
+                </div>
+                <div className="p-5 max-h-96 overflow-y-auto">
+                  {loadingAppointments ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full w-8 h-8 border-b-2 border-gray-500"></div>
+                    </div>
+                  ) : previousAppointments.length > 0 ? (
+                    <div className="space-y-4">
+                      {previousAppointments.map((apt) => (
+                        <div key={apt._id} className="border-l-4 border-gray-400 bg-gray-50 rounded-lg p-4 hover:shadow-md transition-all">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-800">{apt.vaccineType}</h4>
+                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Completed
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(apt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3" />
+                            {apt.appointmentTime}
+                          </p>
+                          <p className="text-sm font-medium text-gray-700 mt-2">Dose {apt.doseNumber}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <History className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500">No previous appointments</p>
+                      <p className="text-xs text-gray-400 mt-1">Your appointment history will appear here</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Tip */}
+              <div className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl p-5 border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-600 rounded-full p-2 flex-shrink-0">
+                    <Syringe className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800 text-sm">Quick Tips</h4>
+                    <p className="text-xs text-gray-600 mt-1">
+                      • Arrive 15 minutes before your appointment<br/>
+                      • Bring your ID and previous vaccination records<br/>
+                      • Wear comfortable clothing for easy access
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Phone */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Phone</label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full pl-10 py-2.5 border rounded-xl ${errors.phone ? 'border-red-300' : 'border-gray-200'}`}
-                />
-              </div>
-            </div>
-
-            {/* Vaccine */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Vaccine Type</label>
-              <input
-                type="text"
-                name="vaccineType"
-                value={formData.vaccineType}
-                onChange={handleChange}
-                className={`w-full py-2.5 px-3 border rounded-xl ${errors.vaccineType ? 'border-red-300' : 'border-gray-200'}`}
-              />
-            </div>
-
-            {/* Dose */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Dose Number</label>
-              <input
-                type="number"
-                name="doseNumber"
-                value={formData.doseNumber}
-                onChange={handleChange}
-                className={`w-full py-2.5 px-3 border rounded-xl ${errors.doseNumber ? 'border-red-300' : 'border-gray-200'}`}
-              />
-            </div>
-
-            {/* Age Group */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Age Group</label>
-              <select
-                name="ageGroup"
-                value={formData.ageGroup}
-                onChange={handleChange}
-                className={`w-full py-2.5 px-3 border rounded-xl ${errors.ageGroup ? 'border-red-300' : 'border-gray-200'}`}
-              >
-                <option value="">Select</option>
-                <option value="child">Child</option>
-                <option value="adult">Adult</option>
-                <option value="elder">Elder</option>
-              </select>
-            </div>
-
-            {/* Date */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Date</label>
-              <div className="relative mt-1">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  name="appointmentDate"
-                  value={formData.appointmentDate}
-                  onChange={handleChange}
-                  className={`w-full pl-10 py-2.5 border rounded-xl ${errors.appointmentDate ? 'border-red-300' : 'border-gray-200'}`}
-                />
-              </div>
-            </div>
-
-            {/* Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Time</label>
-              <div className="relative mt-1">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="time"
-                  name="appointmentTime"
-                  value={formData.appointmentTime}
-                  onChange={handleChange}
-                  className={`w-full pl-10 py-2.5 border rounded-xl ${errors.appointmentTime ? 'border-red-300' : 'border-gray-200'}`}
-                />
-              </div>
-            </div>
-
-            {/* BUTTON */}
-            <div className="md:col-span-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-3 rounded-xl text-white font-semibold transition-all duration-200 ${
-                  isSubmitting
-                    ? 'bg-green-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-green-600 hover:scale-[1.02] hover:shadow-lg'
-                }`}
-              >
-                {isSubmitting ? 'Booking...' : 'Book Appointment'}
-              </button>
-            </div>
-
-          </form>
+          </div>
         </div>
       </div>
     </>
