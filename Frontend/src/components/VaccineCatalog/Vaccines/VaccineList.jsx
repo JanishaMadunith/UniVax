@@ -36,11 +36,28 @@ const VaccineList = ({ onSelectVaccine }) => {
     try {
       setLoading(true);
       const response = await vaccineAPI.getAllVaccines(filters);
-      setVaccines(response.data || response);
-      toast.success('Vaccines loaded successfully');
+      let filteredData = response.data || response;
+      
+      // Client-side filtering as backup (case-insensitive)
+      if (filters.status && filters.status !== 'all') {
+        filteredData = filteredData.filter(v => 
+          v.status?.toLowerCase() === filters.status.toLowerCase()
+        );
+      }
+      
+      setVaccines(filteredData);
+      // Only show success toast if we have data
+      if (filteredData.length > 0) {
+        toast.success('Vaccines loaded successfully');
+      }
     } catch (error) {
-      toast.error('Failed to load vaccines: ' + error.message);
-      console.error(error);
+      // If no vaccines found with this filter, just show empty state
+      if (error.message.includes('No vaccines found')) {
+        setVaccines([]);
+      } else {
+        toast.error('Failed to load vaccines: ' + error.message);
+        console.error(error);
+      }
     } finally {
       setLoading(false);
     }
@@ -238,14 +255,23 @@ const VaccineList = ({ onSelectVaccine }) => {
       {!loading && vaccines.length === 0 && (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <AlertCircle className="mx-auto mb-4 text-gray-400" size={48} />
-          <p className="text-gray-600 mb-4">No vaccines found</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 transition"
-          >
-            <Plus size={18} />
-            Create First Vaccine
-          </button>
+          <p className="text-gray-600 mb-2">
+            No vaccines found
+            {filters.status && filters.status !== 'all' && (
+              <span className="block text-sm font-medium mt-1">
+                (Status: <span className="capitalize">{filters.status}</span>)
+              </span>
+            )}
+          </p>
+          {(userRole === 'Doctor' || userRole === 'Admin') && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 transition mt-4"
+            >
+              <Plus size={18} />
+              Create First Vaccine
+            </button>
+          )}
         </div>
       )}
     </div>
