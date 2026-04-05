@@ -37,7 +37,15 @@ export const vaccineAPI = {
   // Get all vaccines
   getAllVaccines: async (filters = {}) => {
     const queryParams = new URLSearchParams(filters);
-    return makeRequest(`/vaccines?${queryParams}`);
+    try {
+      return await makeRequest(`/vaccines?${queryParams}`);
+    } catch (error) {
+      // If no vaccines found (404), return empty array instead of throwing
+      if (error.message.includes('No vaccines found')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
   },
 
   // Get single vaccine by ID
@@ -80,7 +88,15 @@ export const vaccineAPI = {
 export const doseAPI = {
   // Get all doses for a vaccine
   getVaccineDoses: async (vaccineId) => {
-    return makeRequest(`/doses/vaccine/${vaccineId}`);
+    try {
+      return await makeRequest(`/doses/vaccine/${vaccineId}`);
+    } catch (error) {
+      // If no doses found (404), return empty array instead of throwing
+      if (error.message.includes('No doses found') || error.message.includes('not exist')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
   },
 
   // Get single dose by ID
