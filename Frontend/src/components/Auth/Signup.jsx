@@ -1,10 +1,12 @@
 // src/components/SignUp.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Shield, Mail, Lock, User, Phone, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // Basic authentication
     name: '',
@@ -123,25 +125,23 @@ const SignUp = () => {
     if (validateForm()) {
       setIsSubmitting(true);
       
-      // Prepare data according to your schema
-      const userData = {
-        name: formData.name,
-        email: formData.email.toLowerCase(),
-        phone: formData.phone,
-        password: formData.password,
-        role: 'Patient', // Default role - Admin will change if needed
-        address: {
-          city: formData.address.city,
-          district: formData.address.district,
-          province: formData.address.province || ''
-        },
-        accountStatus: 'Pending', // Set to 'Pending' for email verification
-        agreeToTerms: formData.agreeToTerms,
-        rememberMe: formData.rememberMe
-      };
-      
       try {
-        // API call to your backend
+        const userData = {
+          name: formData.name,
+          email: formData.email.toLowerCase(),
+          phone: formData.phone,
+          password: formData.password,
+          role: 'Patient', // Default role
+          address: {
+            city: formData.address.city,
+            district: formData.address.district,
+            province: formData.address.province || ''
+          },
+          accountStatus: 'Pending',
+          agreeToTerms: formData.agreeToTerms,
+          rememberMe: formData.rememberMe
+        };
+        
         const response = await fetch('http://localhost:5001/api/V1/users/register', {
           method: 'POST',
           headers: { 
@@ -153,15 +153,10 @@ const SignUp = () => {
         const data = await response.json();
         
         if (response.ok) {
-          toast.success('Account created successfully! Please check your email to verify your account.', {
+          toast.success('Account created successfully! Redirecting to login...', {
             position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
+            autoClose: 3000,
           });
-          setSubmitSuccess(true);
           
           // Reset form after success
           setTimeout(() => {
@@ -176,7 +171,8 @@ const SignUp = () => {
               address: { city: '', district: '', province: '' }
             });
             setSubmitSuccess(false);
-          }, 3000);
+            navigate('/login');
+          }, 2000);
         } else {
           toast.error(data.message || 'Failed to create account. Please try again.', {
             position: "top-right",
@@ -184,7 +180,6 @@ const SignUp = () => {
           });
           setErrors({ submit: data.message || 'Signup failed' });
         }
-        
       } catch (error) {
         console.error('Signup error:', error);
         toast.error('Network error. Please check your connection.', {
@@ -279,7 +274,7 @@ const SignUp = () => {
             </div>
           </div>
           
-          {/* Right side - Signup Form */}
+          {/* Right side - Auth Form */}
           <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-800">Create your account</h2>
@@ -287,10 +282,10 @@ const SignUp = () => {
               <p className="text-xs text-blue-600 mt-1">Your role will be verified by our admin team</p>
             </div>
             
-            {submitSuccess && (
+{submitSuccess && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-2 text-green-700">
                 <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                <span>Account created successfully! Please check your email to verify your account.</span>
+                <span>Account created successfully! Redirecting to login...</span>
               </div>
             )}
             
@@ -323,31 +318,6 @@ const SignUp = () => {
                 {errors.name && (
                   <p className="mt-1 text-xs text-red-500 flex items-center">
                     <AlertCircle className="w-3 h-3 mr-1" /> {errors.name}
-                  </p>
-                )}
-              </div>
-              
-              {/* Email Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                      errors.email ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200 focus:border-blue-400'
-                    }`}
-                    placeholder="you@example.com"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-500 flex items-center">
-                    <AlertCircle className="w-3 h-3 mr-1" /> {errors.email}
                   </p>
                 )}
               </div>
@@ -433,7 +403,32 @@ const SignUp = () => {
                 </div>
               </div>
               
-              {/* Password Fields */}
+              {/* Email Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                      errors.email ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200 focus:border-blue-400'
+                    }`}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" /> {errors.email}
+                  </p>
+                )}
+              </div>
+              
+              {/* Password Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password *
@@ -459,6 +454,7 @@ const SignUp = () => {
                 <p className="mt-1 text-xs text-gray-400">Minimum 6 characters</p>
               </div>
               
+              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Confirm Password *
@@ -542,13 +538,15 @@ const SignUp = () => {
               <div className="text-center mt-6">
                 <p className="text-sm text-gray-500">
                   Already have an account?{' '}
-                  <a href="/login" className="text-blue-600 hover:underline font-medium">
+                  <button 
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
                     Sign in
-                  </a>
+                  </button>
                 </p>
               </div>
-              
-          
             </form>
           </div>
         </div>
