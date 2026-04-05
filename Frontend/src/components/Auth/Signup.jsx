@@ -16,6 +16,7 @@ const SignUp = () => {
     confirmPassword: '',
     agreeToTerms: false,
     rememberMe: false,
+    role: 'Patient', // Default role
     
     // Address fields
     address: {
@@ -131,7 +132,7 @@ const SignUp = () => {
           email: formData.email.toLowerCase(),
           phone: formData.phone,
           password: formData.password,
-          role: 'Patient', // Default role
+          role: formData.role,
           address: {
             city: formData.address.city,
             district: formData.address.district,
@@ -297,6 +298,32 @@ const SignUp = () => {
             )}
             
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Role Selection */}
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <label className="text-sm font-medium text-gray-700 block mb-3">
+                  Select Your Role *
+                </label>
+                <div className="flex gap-2">
+                  {['Patient', 'Doctor', 'Admin'].map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, role }))}
+                      className={`flex-1 py-2 px-3 rounded-lg font-medium transition ${
+                        formData.role === role
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  Select your role. You may need admin approval for Doctor role.
+                </p>
+              </div>
+
               {/* Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
