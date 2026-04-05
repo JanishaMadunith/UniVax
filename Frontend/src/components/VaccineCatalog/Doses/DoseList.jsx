@@ -48,13 +48,8 @@ const DoseList = ({ vaccineId, vaccineName, onBack }) => {
         toast.success('Doses loaded successfully');
       }
     } catch (error) {
-      // If no doses found with this filter, just show empty state
-      if (error.message.includes('No doses found') || error.message.includes('not exist')) {
-        setDoses([]);
-      } else {
-        toast.error('Failed to load doses: ' + error.message);
-        console.error(error);
-      }
+      toast.error('Failed to load doses: ' + error.message);
+      console.error(error);
     } finally {
       setLoading(false);
     }
