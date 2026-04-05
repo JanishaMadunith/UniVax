@@ -51,13 +51,8 @@ const VaccineList = ({ onSelectVaccine }) => {
         toast.success('Vaccines loaded successfully');
       }
     } catch (error) {
-      // If no vaccines found with this filter, just show empty state
-      if (error.message.includes('No vaccines found')) {
-        setVaccines([]);
-      } else {
-        toast.error('Failed to load vaccines: ' + error.message);
-        console.error(error);
-      }
+      toast.error('Failed to load vaccines: ' + error.message);
+      console.error(error);
     } finally {
       setLoading(false);
     }
