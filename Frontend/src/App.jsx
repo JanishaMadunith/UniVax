@@ -7,9 +7,13 @@ import PatientDashboard from './components/patient/Dashboard';
 import PatientClinics from './components/patient/Clinics';
 import PatientFeedback from './components/patient/Feedback';
 import PatientAbout from './components/patient/About';
-
-const DoctorDashboard = () => <h1>Doctor Dashboard</h1>;
-const AdminDashboard = () => <h1>Admin Dashboard</h1>;
+import DoctorDashboard from './components/doctor/DoctorDashboard';
+import DoctorAppointments from './components/doctor/DoctorAppointments';
+import DoctorClinics from './components/doctor/DoctorClinics';
+import DoctorVaccines from './components/doctor/DoctorVaccines';
+import DoctorDoses from './components/doctor/DoctorDoses';
+import DoctorProfile from './components/doctor/DoctorProfile';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 function App() {
   return (
@@ -29,8 +33,15 @@ function App() {
         <Route path="/patient/feedback" element={<PatientFeedback />} />
         <Route path="/patient/about" element={<PatientAbout />} />
 
-        {/* Role-based Dashboards */}
+        {/* Doctor Routes */}
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+        <Route path="/doctor/clinics" element={<DoctorClinics />} />
+        <Route path="/doctor/vaccines" element={<DoctorVaccines />} />
+        <Route path="/doctor/doses" element={<DoctorDoses />} />
+        <Route path="/doctor/profile" element={<DoctorProfile />} />
+
+        {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* Fallback */}
