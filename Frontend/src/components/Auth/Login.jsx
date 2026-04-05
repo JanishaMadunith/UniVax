@@ -9,7 +9,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    isPrivilegedLogin: false
+    rememberMe: false
   });
 
   const [errors, setErrors] = useState({});
@@ -75,49 +75,23 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        const user = data.user;
-
-
-        // Warning for Doctor/Admin without checkbox
-        if (!formData.isPrivilegedLogin && (user.role === 'Doctor' || user.role === 'Admin')) {
-          const message = 'Please login according to your role (Doctor/Admin).';
-          setErrors({ submit: message });
-          toast.error(message);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Warning for Patient with checkbox
-        if (formData.isPrivilegedLogin && user.role === 'Patient') {
-          const message = 'Please login as a Patient without selecting Doctor/Admin.';
-          setErrors({ submit: message });
-          toast.error(message);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Save token + user
+        // Save token
         if (data.token) {
           localStorage.setItem('token', data.token);
+          if (formData.rememberMe) {
+            localStorage.setItem('email', formData.email);
+          }
         }
-        localStorage.setItem('user', JSON.stringify(user));
 
-        toast.success('Login successful!');
+        toast.success('Login successful! Redirecting...', {
+          position: "top-right",
+          autoClose: 2000,
+        });
 
-        // ROLE-BASED REDIRECTION
-        switch (user.role) {
-          case 'Patient':
-            navigate('/patient/dashboard');
-            break;
-          case 'Doctor':
-            navigate('/doctor/dashboard');
-            break;
-          case 'Admin':
-            navigate('/admin/dashboard');
-            break;
-          default:
-            navigate('/');
-        }
+        // Redirect to vaccines page
+        setTimeout(() => {
+          navigate('/vaccines');
+        }, 1000);
 
       } else {
         const message = data.message || 'Invalid email or password';
@@ -177,22 +151,6 @@ const Login = () => {
                 }`}
                 placeholder="you@example.com"
               />
-            </div>
-          </div>
-
-          {/* Checkbox */}
-          <div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="isPrivilegedLogin"
-                checked={formData.isPrivilegedLogin}
-                onChange={handleChange}
-                className="w-4 h-4 text-blue-600"
-              />
-              <label className="text-sm text-gray-600">
-                Doctor/Admin Login
-              </label>
             </div>
           </div>
 
