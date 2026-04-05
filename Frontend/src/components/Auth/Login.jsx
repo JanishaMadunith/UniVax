@@ -9,8 +9,10 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
   });
+
+  const [selectedRole, setSelectedRole] = useState('Patient');
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,14 +78,20 @@ const Login = () => {
 
       if (response.ok) {
         // Save token
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          if (formData.rememberMe) {
-            localStorage.setItem('email', formData.email);
-          }
+        localStorage.setItem('token', data.token);
+        
+        // Override user role for testing purposes
+        const userWithRole = {
+          ...data.user,
+          role: selectedRole
+        };
+        localStorage.setItem('user', JSON.stringify(userWithRole));
+        
+        if (formData.rememberMe) {
+          localStorage.setItem('email', formData.email);
         }
 
-        toast.success('Login successful! Redirecting...', {
+        toast.success(`Login successful as ${selectedRole}! Redirecting...`, {
           position: "top-right",
           autoClose: 2000,
         });
@@ -132,6 +140,32 @@ const Login = () => {
             {errors.submit}
           </div>
         )}
+
+        {/* Role Selection */}
+        <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <label className="text-sm font-medium text-gray-700 block mb-3">
+            Login Role (Select for Testing)
+          </label>
+          <div className="flex gap-2">
+            {['Patient', 'Doctor', 'Admin'].map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setSelectedRole(role)}
+                className={`flex-1 py-2 px-3 rounded-lg font-medium transition ${
+                  selectedRole === role
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-2">
+            💡 Select your role above to test different features
+          </p>
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
