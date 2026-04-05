@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, ChevronRight, AlertCircle, Loader } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronRight, AlertCircle, Loader, Lock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { vaccineAPI } from '../../../services/api';
 import VaccineForm from './VaccineForm';
@@ -12,6 +12,20 @@ const VaccineList = ({ onSelectVaccine }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState(null);
   const [filters, setFilters] = useState({ status: 'active' });
+  const [userRole, setUserRole] = useState(null);
+
+  // Get user role on component mount
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setUserRole(userData.role);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   // Fetch vaccines on component mount and when filters change
   useEffect(() => {
@@ -93,13 +107,21 @@ const VaccineList = ({ onSelectVaccine }) => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-800">Vaccines</h1>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-          >
-            <Plus size={20} />
-            Add Vaccine
-          </button>
+          {(userRole === 'Doctor' || userRole === 'Admin') && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+            >
+              <Plus size={20} />
+              Add Vaccine
+            </button>
+          )}
+          {userRole === 'Patient' && (
+            <div className="text-gray-500 text-sm flex items-center gap-2">
+              <Lock size={16} />
+              View Only (Patient)
+            </div>
+          )}
         </div>
 
         {/* Filter Buttons */}
@@ -169,27 +191,42 @@ const VaccineList = ({ onSelectVaccine }) => {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingVaccine(vaccine);
-                      setShowForm(true);
-                    }}
-                    className="text-blue-500 hover:text-blue-700 p-2 transition"
-                    title="Edit vaccine"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(vaccine._id);
-                    }}
-                    className="text-red-500 hover:text-red-700 p-2 transition"
-                    title="Delete vaccine"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  {/* Edit Button - Doctor/Admin only */}
+                  {(userRole === 'Doctor' || userRole === 'Admin') ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingVaccine(vaccine);
+                        setShowForm(true);
+                      }}
+                      className="text-blue-500 hover:text-blue-700 p-2 transition"
+                      title="Edit vaccine"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                  ) : (
+                    <div className="text-gray-300 p-2 cursor-not-allowed" title="Only Doctor/Admin can edit">
+                      <Edit2 size={18} />
+                    </div>
+                  )}
+
+                  {/* Delete Button - Doctor/Admin only */}
+                  {(userRole === 'Doctor' || userRole === 'Admin') ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(vaccine._id);
+                      }}
+                      className="text-red-500 hover:text-red-700 p-2 transition"
+                      title="Delete vaccine"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  ) : (
+                    <div className="text-gray-300 p-2 cursor-not-allowed" title="Only Doctor/Admin can delete">
+                      <Lock size={18} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
