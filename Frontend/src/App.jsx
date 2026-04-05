@@ -14,6 +14,11 @@ import DoctorVaccines from './components/doctor/DoctorVaccines';
 import DoctorDoses from './components/doctor/DoctorDoses';
 import DoctorProfile from './components/doctor/DoctorProfile';
 import AdminDashboard from './components/admin/AdminDashboard';
+import AdminUsers from './components/admin/AdminUsers';
+import AdminClinics from './components/admin/AdminClinics';
+import AdminAppointments from './components/admin/AdminAppointments';
+import AdminVaccines from './components/admin/AdminVaccines';
+import AdminDoses from './components/admin/AdminDoses';
 
 function App() {
   return (
@@ -43,6 +48,11 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/clinics" element={<AdminClinics />} />
+        <Route path="/admin/appointments" element={<AdminAppointments />} />
+        <Route path="/admin/vaccines" element={<AdminVaccines />} />
+        <Route path="/admin/doses" element={<AdminDoses />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/signup" />} />
