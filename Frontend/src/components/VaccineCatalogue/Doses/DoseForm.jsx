@@ -47,6 +47,17 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
     }
   };
 
+  // Helper function to convert age to months for comparison
+  const convertAgeToMonths = (value, unit) => {
+    const conversions = {
+      days: value / 30,
+      weeks: (value * 7) / 30,
+      months: value,
+      years: value * 12
+    };
+    return conversions[unit] || value;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -59,8 +70,13 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
     if (formData.minAge.value < 0) {
       newErrors.minAge = 'Minimum age cannot be negative';
     }
-    if (formData.maxAge.value && formData.maxAge.value < formData.minAge.value) {
-      newErrors.maxAge = 'Maximum age must be greater than minimum age';
+    // Only validate max age if it's provided
+    if (formData.maxAge.value) {
+      const minAgeInMonths = convertAgeToMonths(formData.minAge.value, formData.minAge.unit);
+      const maxAgeInMonths = convertAgeToMonths(formData.maxAge.value, formData.maxAge.unit);
+      if (maxAgeInMonths <= minAgeInMonths) {
+        newErrors.maxAge = 'Maximum age must be greater than minimum age';
+      }
     }
     if (formData.intervalFromPrevious.minDays < 0) {
       newErrors.minDays = 'Minimum days cannot be negative';
