@@ -153,6 +153,7 @@ const VaccineForm = ({ vaccine = null, onClose }) => {
                   type="text"
                   name="name"
                   value={formData.name}
+                  disabled={!!vaccine}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                     errors.name
