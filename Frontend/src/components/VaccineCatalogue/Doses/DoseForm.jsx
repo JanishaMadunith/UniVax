@@ -32,7 +32,13 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
   useEffect(() => {
     fetchVaccines();
     if (dose) {
-      setFormData(dose);
+      // Normalize date fields if they come as Date objects from backend
+      const normalizedDose = {
+        ...dose,
+        validFrom: typeof dose.validFrom === 'string' ? dose.validFrom : new Date(dose.validFrom).toISOString(),
+        validUntil: dose.validUntil ? (typeof dose.validUntil === 'string' ? dose.validUntil : new Date(dose.validUntil).toISOString()) : null,
+      };
+      setFormData(normalizedDose);
       setSelectedVaccine(dose.vaccineId._id || dose.vaccineId);
     }
   }, [dose]);
@@ -460,10 +466,9 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
               <input
                 type="number"
                 min="0"
+                name="allowableDelay"
                 value={formData.allowableDelay}
-                onChange={(e) =>
-                  handleNestedChange('allowableDelay', 'value', e.target.value)
-                }
+                onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Grace period in days"
               />
