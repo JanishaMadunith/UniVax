@@ -40,6 +40,7 @@ const createDose = async (vaccineId, doseData) => {
       data: dose
     };
   } catch (error) {
+    console.error('Dose creation error:', error);
     if (error.status) {
       throw error;
     }
