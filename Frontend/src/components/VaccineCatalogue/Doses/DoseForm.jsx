@@ -253,11 +253,12 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
                   min="1"
                   value={formData.doseNumber}
                   onChange={handleInputChange}
+                  disabled={!!dose}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                     errors.doseNumber
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-blue-500'
-                  }`}
+                  } ${dose ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 />
                 {errors.doseNumber && (
                   <p className="text-red-500 text-sm mt-1">{errors.doseNumber}</p>
@@ -274,7 +275,8 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
                   name="doseName"
                   value={formData.doseName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={!!dose}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${dose ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   placeholder="e.g., Primary Dose 1"
                 />
               </div>
