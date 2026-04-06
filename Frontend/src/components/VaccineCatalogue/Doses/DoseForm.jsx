@@ -17,7 +17,7 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
     allowableDelay: 0,
     priority: 'routine',
     status: 'active',
-    validFrom: new Date().toISOString().split('T')[0],
+    validFrom: new Date().toISOString(),
     validUntil: null,
     notes: '',
     guidelines: [],
@@ -56,6 +56,23 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
       years: value * 12
     };
     return conversions[unit] || value;
+  };
+
+  // Helper function to format ISO date to yyyy-MM-dd for input field
+  const formatDateForInput = (dateValue) => {
+    if (!dateValue) return '';
+    const date = new Date(dateValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to convert yyyy-MM-dd to ISO timestamp
+  const formatDateForSubmit = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toISOString();
   };
 
   const validateForm = () => {
@@ -466,9 +483,9 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
                 </label>
                 <input
                   type="date"
-                  value={formData.validFrom}
+                  value={formatDateForInput(formData.validFrom)}
                   onChange={(e) =>
-                    setFormData({ ...formData, validFrom: e.target.value })
+                    setFormData({ ...formData, validFrom: formatDateForSubmit(e.target.value) })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -481,9 +498,9 @@ const DoseForm = ({ dose = null, vaccineId = null, onClose }) => {
                 </label>
                 <input
                   type="date"
-                  value={formData.validUntil || ''}
+                  value={formatDateForInput(formData.validUntil)}
                   onChange={(e) =>
-                    setFormData({ ...formData, validUntil: e.target.value || null })
+                    setFormData({ ...formData, validUntil: formatDateForSubmit(e.target.value) })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
