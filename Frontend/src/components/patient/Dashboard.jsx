@@ -374,7 +374,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions - Enhanced */}
+            {/* Quick Actions - Enhanced with Immunization Logs */}
             <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 ⚡ Quick Actions
@@ -386,20 +386,23 @@ const Dashboard = () => {
                   <p className="text-sm font-semibold text-gray-700">Book Appointment</p>
                   <p className="text-xs text-gray-400 mt-1">Schedule your next dose</p>
                 </Link>
+
+                <Link to="/patient/immunization-logs" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
+                  <FileText className="w-10 h-10 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition" />
+                  <p className="text-sm font-semibold text-gray-700">Immunization Logs</p>
+                  <p className="text-xs text-gray-400 mt-1">View full vaccination history</p>
+                </Link>
+
                 <Link to="/patient/feedback" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
                   <Star className="w-10 h-10 text-amber-500 mx-auto mb-2 group-hover:scale-110 transition" />
                   <p className="text-sm font-semibold text-gray-700">Give Feedback</p>
                   <p className="text-xs text-gray-400 mt-1">Share your experience</p>
                 </Link>
+
                 <Link to="/patient/clinics" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
                   <MapPin className="w-10 h-10 text-cyan-600 mx-auto mb-2 group-hover:scale-110 transition" />
                   <p className="text-sm font-semibold text-gray-700">View Clinics</p>
                   <p className="text-xs text-gray-400 mt-1">Find nearby centers</p>
-                </Link>
-                <Link to="/patient/records" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
-                  <FileText className="w-10 h-10 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition" />
-                  <p className="text-sm font-semibold text-gray-700">View Records</p>
-                  <p className="text-xs text-gray-400 mt-1">Your health history</p>
                 </Link>
               </div>
             </div>
