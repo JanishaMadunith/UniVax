@@ -140,3 +140,59 @@ export const doseAPI = {
     });
   },
 };
+
+// ============== USER API CALLS ==============
+
+export const userAPI = {
+  // Get all users
+  getAllUsers: async () => {
+    try {
+      return await makeRequest('/api/V1/users', {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No users found')) {
+        return { success: true, count: 0, users: [] };
+      }
+      throw error;
+    }
+  },
+
+  // Get user by ID
+  getUserById: async (id) => {
+    return makeRequest(`/api/V1/users/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  // Update user
+  updateUser: async (id, userData) => {
+    return makeRequest(`/api/V1/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  // Delete user
+  deleteUser: async (id) => {
+    return makeRequest(`/api/V1/users/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Change user role
+  changeUserRole: async (id, newRole) => {
+    return makeRequest(`/api/V1/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ role: newRole }),
+    });
+  },
+
+  // Suspend/Unsuspend user account
+  updateAccountStatus: async (id, status) => {
+    return makeRequest(`/api/V1/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ accountStatus: status }),
+    });
+  },
+};
