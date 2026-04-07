@@ -19,6 +19,8 @@ import AdminClinics from './components/admin/AdminClinics';
 import AdminAppointments from './components/admin/AdminAppointments';
 import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
+import DoctorCreateLog from './components/Logger/DoctorCreateLog';
+import PatientImmunizationLogs from './components/Logger/PatientImmunizationLogs';
 
 function App() {
   return (
@@ -45,6 +47,9 @@ function App() {
         <Route path="/doctor/vaccines" element={<DoctorVaccines />} />
         <Route path="/doctor/doses" element={<DoctorDoses />} />
         <Route path="/doctor/profile" element={<DoctorProfile />} />
+
+        <Route path="/patient/immunization-logs" element={<PatientImmunizationLogs />} />
+        <Route path="/doctor/create-log" element={<DoctorCreateLog />} />
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
