@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Save, Calendar, Shield } from 'lucide-react';
+import DoctorSidebar from './DoctorSidebar';
 
 const DoctorCreateLog = () => {
   const [form, setForm] = useState({
@@ -36,6 +37,7 @@ const DoctorCreateLog = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <DoctorSidebar/>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="text-teal-600" size={32} />
