@@ -19,8 +19,8 @@ import AdminClinics from './components/admin/AdminClinics';
 import AdminAppointments from './components/admin/AdminAppointments';
 import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
-import DoctorCreateLog from './components/Logger/DoctorCreateLog';
-import PatientImmunizationLogs from './components/Logger/PatientImmunizationLogs';
+import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
+import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 
 function App() {
   return (
