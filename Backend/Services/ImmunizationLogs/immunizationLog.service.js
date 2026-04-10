@@ -12,12 +12,21 @@ class ImmunizationLogService {
     }
 
     const log = new ImmunizationLog(data);
-    return await log.save();
+    return await log.save().then(log => log.populate('userId vaccineId'));
   }
 
   async getLogs(userId, role) {
-    const query = role === 'Admin' ? {} : { userId };  // Admins see all, users see own
-    return await ImmunizationLog.find(query);  // Populate references for integration
+    // Admins and Doctors can see all logs
+    // Regular users (Patients) can only see their own logs
+    if (role === 'Admin' || role === 'Doctor') {
+      return await ImmunizationLog.find().populate('userId vaccineId');
+    }
+    return await ImmunizationLog.find({ userId }).populate('userId vaccineId');
+  }
+
+  async getLogsByUserId(userId) {
+    // Get logs for a specific user (patient)
+    return await ImmunizationLog.find({ userId }).populate('userId vaccineId');
   }
 
   async getLogById(id) {
@@ -25,7 +34,7 @@ class ImmunizationLogService {
   }
 
   async updateLog(id, data) {
-    return await ImmunizationLog.findByIdAndUpdate(id, data, { new: true });
+    return await ImmunizationLog.findByIdAndUpdate(id, data, { new: true }).populate('userId vaccineId');
   }
 
   async deleteLog(id) {
