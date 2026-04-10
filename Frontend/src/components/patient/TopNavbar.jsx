@@ -8,7 +8,8 @@ import {
   Info,
   Syringe,
   LogOut,
-  User
+  User,
+  FileText   // ← New icon for Logs
 } from 'lucide-react';
 
 const TopNavbar = () => {
@@ -26,13 +27,12 @@ const TopNavbar = () => {
     { path: '/patient/dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { path: '/patient/clinics', name: 'Clinics', icon: Building2 },
     { path: '/patient/appointments', name: 'Appointments', icon: Calendar },
+    { path: '/patient/immunization-logs', name: 'Logs', icon: FileText },        // ← YOUR LINK
     { path: '/patient/feedback', name: 'Feedback', icon: MessageSquare },
     { path: '/patient/about', name: 'About Us', icon: Info },
   ];
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -93,31 +93,6 @@ const TopNavbar = () => {
               <LogOut className="w-4 h-4" />
               <span className="text-sm font-medium hidden sm:inline-block">Logout</span>
             </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden overflow-x-auto pb-2">
-          <div className="flex space-x-1 min-w-max">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`
-                    flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    ${isActive(item.path)
-                      ? 'bg-gradient-to-r from-blue-50 to-green-50 text-green-600'
-                      : 'text-gray-600 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <Icon className="w-4 h-4 mr-1" />
-                  {item.name}
-                </Link>
-              );
-            })}
           </div>
         </div>
       </div>

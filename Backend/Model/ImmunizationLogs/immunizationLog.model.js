@@ -37,14 +37,3 @@ const immunizationLogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('ImmunizationLog', immunizationLogSchema);
-
-// Example function to get vaccine information
-async function getVaccineInfo(vaccineId) {
-  try {
-    const response = await axios.get(`/api/vaccines/${vaccineId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching vaccine info:', error);
-    return null;
-  }
-}

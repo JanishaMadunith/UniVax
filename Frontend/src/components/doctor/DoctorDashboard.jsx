@@ -8,7 +8,9 @@ const DoctorDashboard = () => {
       <div className="ml-64 px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
         <p className="text-gray-600 mt-2">Welcome to your doctor dashboard</p>
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {/* Existing cards */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-teal-500 hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold text-gray-900">Appointments</h3>
             <p className="text-4xl font-bold text-teal-600 mt-2">0</p>
@@ -20,6 +22,11 @@ const DoctorDashboard = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-blue-500 hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold text-gray-900">Clinics</h3>
             <p className="text-4xl font-bold text-blue-600 mt-2">0</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-purple-500 hover:shadow-xl transition-all">
+            <h3 className="text-lg font-semibold text-gray-900">Logs</h3>
+            <p className="text-4xl font-bold text-purple-600 mt-2">12</p>
+            <p className="text-xs text-purple-500 mt-1">Records this month</p>
           </div>
           <div className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold">Reports</h3>

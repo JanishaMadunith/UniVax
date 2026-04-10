@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, FileText } from 'lucide-react';
 
 const DoctorSidebar = () => {
   const [userName, setUserName] = useState('Doctor');
@@ -26,37 +26,47 @@ const DoctorSidebar = () => {
         <nav className="space-y-2">
           <Link 
             to="/doctor/dashboard" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Dashboard
           </Link>
           <Link 
             to="/doctor/appointments" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Appointments
           </Link>
           <Link 
             to="/doctor/clinics" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Clinics
           </Link>
           <Link 
             to="/doctor/vaccines" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Vaccines
           </Link>
           <Link 
             to="/doctor/doses" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Doses
           </Link>
+
+          {/* 🔥 YOUR IMMUNIZATION LOG LINK */}
+          <Link 
+            to="/doctor/create-log" 
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 bg-white/10"
+          >
+            <FileText size={20} />
+            Create New Log
+          </Link>
+
           <Link 
             to="/doctor/profile" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
           >
             Profile
           </Link>

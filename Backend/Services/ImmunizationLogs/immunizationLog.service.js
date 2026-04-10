@@ -5,8 +5,8 @@ class ImmunizationLogService {
   async createLog(data) {
     // Third-party API integration: Fetch vaccine info from CDC API (example)
     try {
-      const vaccineInfo = await axios.get(`https://api.cdc.gov/vaccines/info/${data.vaccineId}`);  // Replace with real API endpoint
-      data.notes = data.notes || `Vaccine details: ${vaccineInfo.data.description}`;  // Enhance notes with API data
+      // const vaccineInfo = await axios.get(`https://api.cdc.gov/vaccines/info/${data.vaccineId}`);  // Replace with real API endpoint
+      // data.notes = data.notes || `Vaccine details: ${vaccineInfo.data.description}`;  // Enhance notes with API data
     } catch (apiError) {
       console.error('Third-party API error:', apiError);  // Handle gracefully, don't fail creation
     }
