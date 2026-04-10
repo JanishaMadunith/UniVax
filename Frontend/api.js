@@ -196,3 +196,65 @@ export const userAPI = {
     });
   },
 };
+
+// ============== IMMUNIZATION LOG API CALLS ==============
+
+export const immunizationLogAPI = {
+  // Create a new immunization log (assign vaccine to patient)
+  createLog: async (logData) => {
+    return makeRequest('/api/V1/logs', {
+      method: 'POST',
+      body: JSON.stringify(logData),
+    });
+  },
+
+  // Get all immunization logs
+  getAllLogs: async () => {
+    try {
+      return await makeRequest('/api/V1/logs', {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No logs found')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
+  },
+
+  // Get logs for a specific patient
+  getPatientLogs: async (patientId) => {
+    try {
+      return await makeRequest(`/api/V1/logs?userId=${patientId}`, {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No logs found')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
+  },
+
+  // Get a specific immunization log
+  getLogById: async (logId) => {
+    return makeRequest(`/api/V1/logs/${logId}`, {
+      method: 'GET',
+    });
+  },
+
+  // Update an immunization log
+  updateLog: async (logId, logData) => {
+    return makeRequest(`/api/V1/logs/${logId}`, {
+      method: 'PUT',
+      body: JSON.stringify(logData),
+    });
+  },
+
+  // Delete an immunization log
+  deleteLog: async (logId) => {
+    return makeRequest(`/api/V1/logs/${logId}`, {
+      method: 'DELETE',
+    });
+  },
+};
