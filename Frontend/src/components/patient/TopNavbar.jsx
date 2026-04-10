@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Building2, 
   Calendar, 
-  MessageSquare, 
   Info,
   Syringe,
   LogOut,
@@ -28,7 +27,6 @@ const TopNavbar = () => {
     { path: '/patient/clinics', name: 'Clinics', icon: Building2 },
     { path: '/patient/appointments', name: 'Appointments', icon: Calendar },
     { path: '/patient/immunization-logs', name: 'Logs', icon: FileText },        // ← YOUR LINK
-    { path: '/patient/feedback', name: 'Feedback', icon: MessageSquare },
     { path: '/patient/about', name: 'About Us', icon: Info },
   ];
 

@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { PatientProvider } from './contexts/PatientContext';
 import SignUp from './components/Auth/Signup';
 import Login from './components/Auth/Login';
+import Landing from './components/Auth/Landing';
 import PatientAppointments from './components/patient/Appointments';
 import PatientDashboard from './components/patient/Dashboard';
 import PatientClinics from './components/patient/Clinics';
-import PatientFeedback from './components/patient/Feedback';
 import PatientAbout from './components/patient/About';
 import DoctorDashboard from './components/doctor/DoctorDashboard';
 import DoctorAppointments from './components/doctor/DoctorAppointments';
@@ -29,8 +29,8 @@ function App() {
        {/* Wrap the entire app with PatientProvider to provide context to all components */}
       <Router>
       <Routes>
-        {/* Redirect to signup */}
-        <Route path="/" element={<Navigate to="/signup" />} />
+        {/* Landing Page */}
+        <Route path="/" element={<Landing />} />
 
         {/* Auth Routes */}
         <Route path="/signup" element={<SignUp />} />
@@ -40,7 +40,6 @@ function App() {
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient/clinics" element={<PatientClinics />} />
         <Route path="/patient/appointments" element={<PatientAppointments />} />
-        <Route path="/patient/feedback" element={<PatientFeedback />} />
         <Route path="/patient/about" element={<PatientAbout />} />
 
         {/* Doctor Routes */}
@@ -63,7 +62,7 @@ function App() {
         <Route path="/admin/doses" element={<AdminDoses />} />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/signup" />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       </Router>
     </PatientProvider>
