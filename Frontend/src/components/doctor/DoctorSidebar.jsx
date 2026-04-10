@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut, User, FileText } from 'lucide-react';
+import { usePatient } from '../../contexts/PatientContext';
 
 const DoctorSidebar = () => {
   const [userName, setUserName] = useState('Doctor');
+  const { selectedPatient } = usePatient();
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -71,6 +73,15 @@ const DoctorSidebar = () => {
             Profile
           </Link>
         </nav>
+
+        {/* Selected Patient Display */}
+        {selectedPatient && (
+          <div className="mt-6 p-3 bg-white/20 rounded-lg border border-white/30">
+            <p className="text-xs font-semibold text-white/80 uppercase tracking-wider">Active Patient</p>
+            <p className="text-sm font-bold text-white mt-1">{selectedPatient.name}</p>
+            <p className="text-xs text-white/70 truncate">{selectedPatient.email}</p>
+          </div>
+        )}
       </div>
 
       {/* User Profile and Logout */}
