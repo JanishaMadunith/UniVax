@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { PatientProvider } from './contexts/PatientContext';
 import SignUp from './components/Auth/Signup';
 import Login from './components/Auth/Login';
 import PatientAppointments from './components/patient/Appointments';
@@ -24,7 +25,8 @@ import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 
 function App() {
   return (
-    <Router>
+    <PatientProvider> // Wrap the entire app with PatientProvider to provide context to all components
+      <Router>
       <Routes>
         {/* Redirect to signup */}
         <Route path="/" element={<Navigate to="/signup" />} />
@@ -62,7 +64,8 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/signup" />} />
       </Routes>
-    </Router>
+      </Router>
+    </PatientProvider>
   );
 }
 
