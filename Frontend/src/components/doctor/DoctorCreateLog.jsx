@@ -26,10 +26,14 @@ const DoctorCreateLog = () => {
 
   const fetchPatients = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/users', {
+      const res = await axios.get('http://localhost:5001/api/V1/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPatients(res.data);
+
+      // API returns an object like { success, count, users: [] }
+      const users = Array.isArray(res.data?.users) ? res.data.users : [];
+      const patientUsers = users.filter((user) => user.role === 'Patient');
+      setPatients(patientUsers);
     } catch (err) {
       toast.error('Failed to load patients');
       console.error(err);
@@ -51,7 +55,7 @@ const DoctorCreateLog = () => {
       return;
     }
     try {
-      await axios.post('http://localhost:3000/api/logs', form, {
+      await axios.post('http://localhost:5001/api/V1/logs', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Immunization log created successfully!');
@@ -101,7 +105,7 @@ const DoctorCreateLog = () => {
                 <option value="">-- Search and select patient --</option>
                 {patients.map((patient) => (
                   <option key={patient._id} value={patient._id}>
-                    {patient.name} ({patient.phn || patient.email || 'No PHN'})
+                    {patient.name} ({patient.phone || patient.email || 'No Phone'})
                   </option>
                 ))}
               </select>

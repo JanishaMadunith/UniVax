@@ -25,7 +25,8 @@ import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 
 function App() {
   return (
-    <PatientProvider> // Wrap the entire app with PatientProvider to provide context to all components
+    <PatientProvider> 
+       {/* Wrap the entire app with PatientProvider to provide context to all components */}
       <Router>
       <Routes>
         {/* Redirect to signup */}

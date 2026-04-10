@@ -17,7 +17,7 @@ const PatientImmunizationLogs = () => {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/logs', {
+      const res = await axios.get('http://localhost:5001/api/V1/logs', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setLogs(res.data);
