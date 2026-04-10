@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { Save, Shield } from 'lucide-react';
+import { Save, Shield, Users } from 'lucide-react';
 import DoctorSidebar from './DoctorSidebar';
 
 const DoctorCreateLog = () => {
+  const [patients, setPatients] = useState([]);
   const [form, setForm] = useState({
     userId: '',
     vaccineId: '',
@@ -18,18 +19,53 @@ const DoctorCreateLog = () => {
 
   const token = localStorage.getItem('token');
 
+  // Load patients when component mounts
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      const res = await axios.get('http://localhost:3000/api/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPatients(res.data);
+    } catch (err) {
+      toast.error('Failed to load patients');
+      console.error(err);
+    }
+  };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handlePatientSelect = (e) => {
+    setForm({ ...form, userId: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.userId) {
+      toast.error('Please select a patient');
+      return;
+    }
     try {
       await axios.post('http://localhost:3000/api/logs', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Immunization log created successfully!');
-      setForm({ userId: '', vaccineId: '', dateAdministered: '', doseNumber: 1, clinic: '', brand: '', batchNumber: '', notes: '' });
+      // Clear form
+      setForm({
+        userId: '',
+        vaccineId: '',
+        dateAdministered: '',
+        doseNumber: 1,
+        clinic: '',
+        brand: '',
+        batchNumber: '',
+        notes: ''
+      });
     } catch (err) {
       toast.error('Failed to create log. Please check all fields.');
     }
@@ -50,19 +86,28 @@ const DoctorCreateLog = () => {
 
         <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Patient Search Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                <Users size={18} /> Select Patient
+              </label>
+              <select
+                name="userId"
+                value={form.userId}
+                onChange={handlePatientSelect}
+                required
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                <option value="">-- Search and select patient --</option>
+                {patients.map((patient) => (
+                  <option key={patient._id} value={patient._id}>
+                    {patient.name} ({patient.phn || patient.email || 'No PHN'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Patient ID / PHN</label>
-                <input
-                  type="text"
-                  name="userId"
-                  value={form.userId}
-                  onChange={handleChange}
-                  required
-                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Enter patient ID"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Vaccine ID</label>
                 <input
@@ -75,9 +120,6 @@ const DoctorCreateLog = () => {
                   placeholder="Vaccine ID"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date Administered</label>
                 <input
@@ -89,6 +131,9 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dose Number</label>
                 <input
@@ -101,9 +146,6 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
                 <input
@@ -116,6 +158,9 @@ const DoctorCreateLog = () => {
                   placeholder="Pfizer-BioNTech"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Batch Number</label>
                 <input
@@ -127,18 +172,17 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
-              <input
-                type="text"
-                name="clinic"
-                value={form.clinic}
-                onChange={handleChange}
-                required
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+                <input
+                  type="text"
+                  name="clinic"
+                  value={form.clinic}
+                  onChange={handleChange}
+                  required
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
             </div>
 
             <div>
