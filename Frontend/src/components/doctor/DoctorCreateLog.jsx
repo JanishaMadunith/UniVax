@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Save, Shield } from 'lucide-react';
+import { Save, Shield, Users } from 'lucide-react';
 import DoctorSidebar from './DoctorSidebar';
+import { usePatient } from '../../contexts/PatientContext';
+import { userAPI, vaccineAPI, immunizationLogAPI } from '../../../api';
 
 const DoctorCreateLog = () => {
+  const { selectedPatient, setSelectedPatient } = usePatient();
+  const [patients, setPatients] = useState([]);
+  const [vaccines, setVaccines] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     userId: '',
     vaccineId: '',
@@ -16,22 +21,82 @@ const DoctorCreateLog = () => {
     notes: ''
   });
 
-  const token = localStorage.getItem('token');
+  // Load patients when component mounts
+  useEffect(() => {
+    fetchPatients();
+    fetchVaccines();
+  }, []);
+
+  // Keep create-log patient aligned with doctor dashboard patient selection
+  useEffect(() => {
+    if (selectedPatient?._id) {
+      setForm((prev) => ({ ...prev, userId: selectedPatient._id }));
+    }
+  }, [selectedPatient]);
+
+  const fetchPatients = async () => {
+    try {
+      const res = await userAPI.getAllUsers();
+      const users = Array.isArray(res.users) ? res.users : [];
+      const patientUsers = users.filter((user) => user.role === 'Patient');
+      setPatients(patientUsers);
+    } catch (err) {
+      toast.error('Failed to load patients');
+      console.error(err);
+    }
+  };
+
+  const fetchVaccines = async () => {
+    try {
+      const res = await vaccineAPI.getAllVaccines();
+      setVaccines(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      toast.error('Failed to load vaccines');
+      console.error(err);
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handlePatientSelect = (e) => {
+    const patientId = e.target.value;
+    setForm({ ...form, userId: patientId });
+
+    // Keep dashboard context in sync if doctor changes patient here
+    const patient = patients.find((p) => p._id === patientId) || null;
+    setSelectedPatient(patient);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.userId || !form.vaccineId) {
+      toast.error('Please select a patient');
+      return;
+    }
+
     try {
-      await axios.post('http://localhost:3000/api/logs', form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      setLoading(true);
+      await immunizationLogAPI.createLog(form);
       toast.success('Immunization log created successfully!');
-      setForm({ userId: '', vaccineId: '', dateAdministered: '', doseNumber: 1, clinic: '', brand: '', batchNumber: '', notes: '' });
+
+      // Clear form
+      setForm({
+        userId: selectedPatient?._id || '',
+        vaccineId: '',
+        dateAdministered: '',
+        doseNumber: 1,
+        clinic: '',
+        brand: '',
+        batchNumber: '',
+        notes: ''
+      });
     } catch (err) {
       toast.error('Failed to create log. Please check all fields.');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,34 +115,50 @@ const DoctorCreateLog = () => {
 
         <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Patient Search Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                <Users size={18} /> Select Patient
+              </label>
+              <select
+                name="userId"
+                value={form.userId}
+                onChange={handlePatientSelect}
+                required
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                <option value="">-- Search and select patient --</option>
+                {patients.map((patient) => (
+                  <option key={patient._id} value={patient._id}>
+                    {patient.name} ({patient.phone || patient.email || 'No Phone'})
+                  </option>
+                ))}
+              </select>
+              {selectedPatient?._id && (
+                <p className="mt-2 text-sm text-cyan-700">
+                  Synced with dashboard selection: {selectedPatient.name}
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Patient ID / PHN</label>
-                <input
-                  type="text"
-                  name="userId"
-                  value={form.userId}
-                  onChange={handleChange}
-                  required
-                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Enter patient ID"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vaccine ID</label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-1">Vaccine</label>
+                <select
                   name="vaccineId"
                   value={form.vaccineId}
                   onChange={handleChange}
                   required
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Vaccine ID"
-                />
+                >
+                  <option value="">-- Select vaccine --</option>
+                  {vaccines.map((vaccine) => (
+                    <option key={vaccine._id} value={vaccine._id}>
+                      {vaccine.name} ({vaccine._id})
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date Administered</label>
                 <input
@@ -89,6 +170,9 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dose Number</label>
                 <input
@@ -101,9 +185,6 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
                 <input
@@ -116,6 +197,9 @@ const DoctorCreateLog = () => {
                   placeholder="Pfizer-BioNTech"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Batch Number</label>
                 <input
@@ -127,18 +211,17 @@ const DoctorCreateLog = () => {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
-              <input
-                type="text"
-                name="clinic"
-                value={form.clinic}
-                onChange={handleChange}
-                required
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+                <input
+                  type="text"
+                  name="clinic"
+                  value={form.clinic}
+                  onChange={handleChange}
+                  required
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
             </div>
 
             <div>
@@ -155,10 +238,11 @@ const DoctorCreateLog = () => {
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 text-lg hover:shadow-lg transition-all"
             >
               <Save size={22} />
-              Save Log & Issue Digital Certificate
+              {loading ? 'Saving...' : 'Save Log & Issue Digital Certificate'}
             </button>
           </form>
         </div>

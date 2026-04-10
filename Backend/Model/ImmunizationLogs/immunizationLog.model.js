@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const axios = require('axios');
 
 const immunizationLogSchema = new mongoose.Schema({
   userId: {
@@ -27,6 +26,16 @@ const immunizationLogSchema = new mongoose.Schema({
   clinic: {
     type: String,
     required: true,
+  },
+  brand: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  batchNumber: {
+    type: String,
+    required: true,
+    trim: true,
   },
   notes: {
     type: String,

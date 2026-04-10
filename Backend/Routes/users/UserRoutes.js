@@ -11,7 +11,7 @@ router.post("/login", UserController.loginUser);
 router.put("/profile", authMiddleware(['Patient', 'Doctor', 'Admin', 'Official']), UserController.updateOwnProfile);
 
 // User management routes
-router.get("/", authMiddleware(['Admin']), UserController.getAllUsers);
+router.get("/", authMiddleware(['Admin', 'Doctor']), UserController.getAllUsers);
 router.get("/:id", authMiddleware(['Patient', 'Doctor', 'Admin']), UserController.getById);
 router.put("/:id", authMiddleware(['Patient', 'Doctor', 'Admin']), UserController.updateUser);
 router.delete("/:id", authMiddleware(['Admin']), UserController.deleteUser);
