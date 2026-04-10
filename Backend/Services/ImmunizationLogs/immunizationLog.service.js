@@ -16,14 +16,19 @@ class ImmunizationLogService {
 
     // Professional email notification via Brevo (non-blocking)
     try {
-      const senderEmail = process.env.BREVO_SENDER_EMAIL;
-      const senderName = process.env.BREVO_SENDER_NAME || 'UniVax Team';
-      const apiKey = process.env.BREVO_API_KEY;
+      const senderEmail = (process.env.BREVO_SENDER_EMAIL || '').trim();
+      const senderName = (process.env.BREVO_SENDER_NAME || 'UniVax Team').trim();
+      const apiKey = (process.env.BREVO_API_KEY || '').trim();
 
-      if (senderEmail && apiKey) {
+      const hasValidApiKey =
+        apiKey.length > 0 &&
+        apiKey !== 'your_brevo_api_key_here' &&
+        !apiKey.toLowerCase().includes('replace_me');
+
+      if (senderEmail && hasValidApiKey) {
         const patientEmail =
           savedLog?.userId?.email ||
-          process.env.BREVO_TEST_RECIPIENT ||
+          (process.env.BREVO_TEST_RECIPIENT || '').trim() ||
           'patient-test@gmail.com';
 
         await axios.post(
@@ -59,10 +64,23 @@ class ImmunizationLogService {
 
         console.log('✓ Brevo email sent successfully');
       } else {
-        console.warn('Brevo email skipped: missing BREVO_API_KEY or BREVO_SENDER_EMAIL');
+        console.warn('Brevo email skipped: missing/placeholder BREVO_API_KEY or missing BREVO_SENDER_EMAIL');
       }
     } catch (emailError) {
-      console.error('Brevo email failed (non-blocking):', emailError.message);
+      const status = emailError?.response?.status;
+      const details = emailError?.response?.data;
+
+      if (status === 401) {
+        console.error(
+          'Brevo email failed (non-blocking): Unauthorized (401). Check BREVO_API_KEY value, key validity, and accidental spaces.'
+        );
+      } else {
+        console.error('Brevo email failed (non-blocking):', emailError.message);
+      }
+
+      if (details) {
+        console.error('Brevo response:', details);
+      }
     }
 
     return savedLog;
