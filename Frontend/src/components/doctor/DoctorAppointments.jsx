@@ -18,8 +18,10 @@ const DoctorAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
+      
       // Placeholder for API call - replace with actual appointment fetch
-      // For now, showing empty state as appointments API path depends on your backend setup
+      // For now, showing empty state as appointments API path depends on your backend setup 
+      
       setAppointments([]);
     } catch (error) {
       toast.error('Failed to fetch appointments');
