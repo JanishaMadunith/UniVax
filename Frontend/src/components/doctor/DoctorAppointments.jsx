@@ -18,11 +18,37 @@ const DoctorAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      
-      // Placeholder for API call - replace with actual appointment fetch
-      // For now, showing empty state as appointments API path depends on your backend setup 
-      
-      setAppointments([]);
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        toast.error('Please login again');
+        setAppointments([]);
+        return;
+      }
+
+      if (!selectedPatient?.email) {
+        setAppointments([]);
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:5001/api/V1/appointments/user/${encodeURIComponent(selectedPatient.email)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        toast.error(data.message || 'Failed to fetch appointments');
+        setAppointments([]);
+        return;
+      }
+
+      setAppointments(Array.isArray(data.data) ? data.data : []);
     } catch (error) {
       toast.error('Failed to fetch appointments');
       console.error(error);
@@ -83,16 +109,12 @@ const DoctorAppointments = () => {
               ) : (
                 appointments.map((appointment) => (
                   <tr key={appointment._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{appointment.patientName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{new Date(appointment.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{appointment.time}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{appointment.fullName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{new Date(appointment.appointmentDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">{appointment.appointmentTime}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        appointment.status === 'Confirmed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {appointment.status}
+                      <span className="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                        Scheduled
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-blue-600 cursor-pointer hover:underline">View</td>

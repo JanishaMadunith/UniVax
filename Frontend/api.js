@@ -1,5 +1,5 @@
 // API Service for Vaccines and Doses
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 // Helper function for making API calls
 const makeRequest = async (endpoint, options = {}) => {
@@ -38,7 +38,7 @@ export const vaccineAPI = {
   getAllVaccines: async (filters = {}) => {
     const queryParams = new URLSearchParams(filters);
     try {
-      return await makeRequest(`/vaccines?${queryParams}`);
+      return await makeRequest(`/api/V1/vaccines?${queryParams}`);
     } catch (error) {
       // If no vaccines found (404), return empty array instead of throwing
       if (error.message.includes('No vaccines found')) {
@@ -50,12 +50,12 @@ export const vaccineAPI = {
 
   // Get single vaccine by ID
   getVaccineById: async (id) => {
-    return makeRequest(`/vaccines/${id}`);
+    return makeRequest(`/api/V1/vaccines/${id}`);
   },
 
   // Create new vaccine
   createVaccine: async (vaccineData) => {
-    return makeRequest('/vaccines', {
+    return makeRequest('/api/V1/vaccines', {
       method: 'POST',
       body: JSON.stringify(vaccineData),
     });
@@ -63,7 +63,7 @@ export const vaccineAPI = {
 
   // Update vaccine
   updateVaccine: async (id, vaccineData) => {
-    return makeRequest(`/vaccines/${id}`, {
+    return makeRequest(`/api/V1/vaccines/${id}`, {
       method: 'PUT',
       body: JSON.stringify(vaccineData),
     });
@@ -71,7 +71,7 @@ export const vaccineAPI = {
 
   // Delete vaccine
   deleteVaccine: async (id, reason = '') => {
-    return makeRequest(`/vaccines/${id}`, {
+    return makeRequest(`/api/V1/vaccines/${id}`, {
       method: 'DELETE',
       body: JSON.stringify({ reason }),
     });
@@ -79,7 +79,7 @@ export const vaccineAPI = {
 
   // Get vaccine history/versions
   getVaccineHistory: async (id) => {
-    return makeRequest(`/vaccines/${id}/history`);
+    return makeRequest(`/api/V1/vaccines/${id}/history`);
   },
 };
 
@@ -89,7 +89,7 @@ export const doseAPI = {
   // Get all doses for a vaccine
   getVaccineDoses: async (vaccineId) => {
     try {
-      return await makeRequest(`/doses/vaccine/${vaccineId}`);
+      return await makeRequest(`/api/V1/doses/vaccine/${vaccineId}`);
     } catch (error) {
       // If no doses found (404), return empty array instead of throwing
       if (error.message.includes('No doses found') || error.message.includes('not exist')) {
@@ -101,12 +101,12 @@ export const doseAPI = {
 
   // Get single dose by ID
   getDoseById: async (id) => {
-    return makeRequest(`/doses/${id}`);
+    return makeRequest(`/api/V1/doses/${id}`);
   },
 
   // Create new dose for a vaccine
   createDose: async (vaccineId, doseData) => {
-    return makeRequest(`/doses/vaccine/${vaccineId}`, {
+    return makeRequest(`/api/V1/doses/vaccine/${vaccineId}`, {
       method: 'POST',
       body: JSON.stringify(doseData),
     });
@@ -114,7 +114,7 @@ export const doseAPI = {
 
   // Update dose
   updateDose: async (id, doseData) => {
-    return makeRequest(`/doses/${id}`, {
+    return makeRequest(`/api/V1/doses/${id}`, {
       method: 'PUT',
       body: JSON.stringify(doseData),
     });
@@ -122,14 +122,14 @@ export const doseAPI = {
 
   // Delete dose
   deleteDose: async (id) => {
-    return makeRequest(`/doses/${id}`, {
+    return makeRequest(`/api/V1/doses/${id}`, {
       method: 'DELETE',
     });
   },
 
   // Calculate next due date
   calculateDueDate: async (vaccineId, patientAgeMonths, lastDoseDate = null, doseNumber = 1) => {
-    return makeRequest('/doses/calculate', {
+    return makeRequest('/api/V1/doses/calculate', {
       method: 'POST',
       body: JSON.stringify({
         vaccineId,
