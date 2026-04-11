@@ -1,149 +1,167 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DoctorSidebar from './DoctorSidebar';
-import { usePatient } from '../../contexts/PatientContext';
-import { userAPI } from '../../../api';
+import { appointmentAPI, vaccineAPI, clinicAPI, immunizationLogAPI } from '../../../api';
 
 const DoctorDashboard = () => {
-  const { selectedPatient, setSelectedPatient } = usePatient();
-  const [patients, setPatients] = useState([]);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [stats, setStats] = useState({ appointments: 0, vaccines: 0, clinics: 0, logs: 0 });
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPatients();
+    fetchAll();
   }, []);
 
-  const fetchPatients = async () => {
+  const fetchAll = async () => {
     try {
-      const response = await userAPI.getAllUsers();
-      const patientsList = response.users?.filter(user => user.role === 'Patient') || [];
-      setPatients(patientsList);
+      const [aptRes, vacRes, clinRes, logRes] = await Promise.all([
+        appointmentAPI.getAllAppointments(),
+        vaccineAPI.getAllVaccines(),
+        clinicAPI.getAllClinics(),
+        immunizationLogAPI.getAllLogs(),
+      ]);
+      const apts = aptRes.appointments || [];
+      const vacs = vacRes.data || [];
+      const clins = clinRes.clinics || [];
+      const logs = logRes.data || [];
+      setAppointments(apts);
+      setStats({ appointments: apts.length, vaccines: vacs.length, clinics: clins.length, logs: logs.length });
     } catch (error) {
-      toast.error('Failed to fetch patients');
+      toast.error('Failed to load dashboard data');
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSearch = (value) => {
-    setSearchInput(value);
-    if (value.length > 0) {
-      const filtered = patients.filter(patient =>
-        patient.name?.toLowerCase().includes(value.toLowerCase()) ||
-        patient.email?.toLowerCase().includes(value.toLowerCase()) ||
-        patient.phone?.includes(value)
-      );
-      setSearchResults(filtered);
-      setShowDropdown(true);
-    } else {
-      setSearchResults([]);
-      setShowDropdown(false);
-    }
-  };
+  // Bar chart: top 5 vaccine types by appointment count
+  const vaccineBreakdown = Object.entries(
+    appointments.reduce((acc, apt) => {
+      const key = apt.vaccineType || 'Unknown';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
-  const handleSelectPatient = (patient) => {
-    setSelectedPatient(patient);
-    setSearchInput('');
-    setShowDropdown(false);
-    toast.success(`Selected patient: ${patient.name}`);
-  };
+  const maxBar = vaccineBreakdown.length > 0 ? vaccineBreakdown[0][1] : 1;
+  const barColors = ['#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
-  const handleClearSelection = () => {
-    setSelectedPatient(null);
-    setSearchInput('');
-    setShowDropdown(false);
-  };
+  // Upcoming appointments (next 5 sorted by date)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcoming = appointments
+    .filter(apt => {
+      const d = new Date(apt.appointmentDate);
+      d.setHours(0, 0, 0, 0);
+      return d >= today;
+    })
+    .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))
+    .slice(0, 5);
+
+  const formatDate = (d) =>
+    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50">
       <DoctorSidebar />
       <div className="ml-64 px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome to your doctor dashboard</p>
+        <p className="text-gray-600 mt-1">Welcome back, Dr. {user.name || 'Doctor'}</p>
 
-        {/* Patient Search Bar */}
-        <div className="mt-6 bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Search & Select Patient</h2>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by patient name, email, or phone..."
-              value={searchInput}
-              onChange={(e) => handleSearch(e.target.value)}
-              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-              className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
-            
-            {/* Dropdown Results */}
-            {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
-                {searchResults.length > 0 ? (
-                  <div className="divide-y">
-                    {searchResults.map(patient => (
-                      <button
-                        key={patient._id}
-                        onClick={() => handleSelectPatient(patient)}
-                        className="w-full p-4 text-left hover:bg-cyan-50 transition-colors"
+        {/* Stats Tiles */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-teal-500 hover:shadow-xl transition-all">
+            <p className="text-sm text-gray-500 font-medium">Total Appointments</p>
+            <p className="text-4xl font-bold text-teal-600 mt-2">
+              {loading ? '—' : stats.appointments}
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-cyan-500 hover:shadow-xl transition-all">
+            <p className="text-sm text-gray-500 font-medium">Vaccines Available</p>
+            <p className="text-4xl font-bold text-cyan-600 mt-2">
+              {loading ? '—' : stats.vaccines}
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-blue-500 hover:shadow-xl transition-all">
+            <p className="text-sm text-gray-500 font-medium">Active Clinics</p>
+            <p className="text-4xl font-bold text-blue-600 mt-2">
+              {loading ? '—' : stats.clinics}
+            </p>
+          </div>
+          <div className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all">
+            <p className="text-sm font-medium opacity-90">Immunization Logs</p>
+            <p className="text-4xl font-bold mt-2">
+              {loading ? '—' : stats.logs}
+            </p>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Bar Chart: Appointments by Vaccine */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Appointments by Vaccine</h2>
+            <p className="text-sm text-gray-500 mb-6">Top 5 vaccine types by appointment volume</p>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+              </div>
+            ) : vaccineBreakdown.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">No appointment data yet</div>
+            ) : (
+              <div className="space-y-4">
+                {vaccineBreakdown.map(([vaccine, count], i) => (
+                  <div key={vaccine}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-gray-700 truncate max-w-[65%]">{vaccine}</span>
+                      <span className="text-gray-500 font-semibold">{count} appointments</span>
+                    </div>
+                    <div className="h-7 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                        style={{ width: `${(count / maxBar) * 100}%`, backgroundColor: barColors[i] }}
                       >
-                        <div className="font-semibold text-gray-900">{patient.name}</div>
-                        <div className="text-sm text-gray-600">{patient.email}</div>
-                        <div className="text-sm text-gray-500">{patient.phone}</div>
-                      </button>
-                    ))}
+                        <span className="text-white text-xs font-semibold">
+                          {Math.round((count / stats.appointments) * 100)}%
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    No patients found
-                  </div>
-                )}
+                ))}
               </div>
             )}
           </div>
 
-          {/* Selected Patient Info */}
-          {selectedPatient && (
-            <div className="mt-4 p-4 bg-cyan-50 border border-cyan-200 rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-cyan-900">Selected Patient:</p>
-                <p className="text-cyan-700 font-semibold">{selectedPatient.name}</p>
-                <p className="text-sm text-cyan-600">{selectedPatient.email} | {selectedPatient.phone}</p>
+          {/* Upcoming Appointments */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Upcoming</h2>
+            <p className="text-sm text-gray-500 mb-4">Next scheduled appointments</p>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
               </div>
-              <button
-                onClick={handleClearSelection}
-                className="p-2 hover:bg-cyan-200 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-cyan-700" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-teal-500 hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold text-gray-900">Appointments</h3>
-            <p className="text-4xl font-bold text-teal-600 mt-2">0</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-cyan-500 hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold text-gray-900">Vaccines</h3>
-            <p className="text-4xl font-bold text-cyan-600 mt-2">0</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-blue-500 hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold text-gray-900">Clinics</h3>
-            <p className="text-4xl font-bold text-blue-600 mt-2">0</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-b-4 border-purple-500 hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold text-gray-900">Logs</h3>
-            <p className="text-4xl font-bold text-purple-600 mt-2">12</p>
-            <p className="text-xs text-purple-500 mt-1">Records this month</p>
-          </div>
-          <div className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold">Reports</h3>
-            <p className="text-4xl font-bold mt-2">0</p>
+            ) : upcoming.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">No upcoming appointments</div>
+            ) : (
+              <div className="space-y-3">
+                {upcoming.map(apt => (
+                  <div key={apt._id} className="flex items-start gap-3 p-3 rounded-xl bg-teal-50 border border-teal-100">
+                    <div className="bg-teal-500 text-white text-xs font-bold rounded-lg px-2 py-1 min-w-fit">
+                      {formatDate(apt.appointmentDate)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{apt.fullName}</p>
+                      <p className="text-xs text-gray-500 truncate">{apt.vaccineType}</p>
+                      <p className="text-xs text-teal-600">{apt.appointmentTime}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
