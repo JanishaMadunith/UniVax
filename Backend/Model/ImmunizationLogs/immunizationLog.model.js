@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const axios = require('axios');
 
 const immunizationLogSchema = new mongoose.Schema({
   userId: {
@@ -28,6 +27,16 @@ const immunizationLogSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  brand: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  batchNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
   notes: {
     type: String,
   },
@@ -37,14 +46,3 @@ const immunizationLogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('ImmunizationLog', immunizationLogSchema);
-
-// Example function to get vaccine information
-async function getVaccineInfo(vaccineId) {
-  try {
-    const response = await axios.get(`/api/vaccines/${vaccineId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching vaccine info:', error);
-    return null;
-  }
-}

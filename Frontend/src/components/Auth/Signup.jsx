@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Calendar, Shield, Mail, Lock, User, Phone, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 
 const SignUp = () => {
@@ -542,9 +543,9 @@ const SignUp = () => {
               <div className="text-center mt-6">
                 <p className="text-sm text-gray-500">
                   Already have an account?{' '}
-                  <a href="/login" className="text-blue-600 hover:underline font-medium">
+                  <Link to="/login" className="text-blue-600 hover:underline font-medium">
                     Sign in
-                  </a>
+                  </Link>
                 </p>
               </div>
               

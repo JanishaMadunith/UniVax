@@ -58,6 +58,11 @@ const userSchema = new Schema({
     rememberMe: {
         type: Boolean,
         default: false
+    },
+
+    profilePic: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true // Automatically creates createdAt and updatedAt

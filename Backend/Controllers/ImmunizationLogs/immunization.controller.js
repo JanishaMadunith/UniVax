@@ -11,7 +11,18 @@ const createLog = async (req, res) => {
 
 const getLogs = async (req, res) => {
   try {
-    const logs = await immunizationLogService.getLogs(req.user.id, req.user.role);  // From auth middleware
+    // Allow filtering by userId through query parameter (for doctors viewing patient logs)
+    const userId = req.query.userId;
+    let logs;
+    
+    if (userId) {
+      // Doctor is requesting logs for a specific patient
+      logs = await immunizationLogService.getLogsByUserId(userId);
+    } else {
+      // Get logs based on user's role
+      logs = await immunizationLogService.getLogs(req.user.id, req.user.role);
+    }
+    
     res.json(logs);
   } catch (error) {
     res.status(500).json({ message: error.message });
