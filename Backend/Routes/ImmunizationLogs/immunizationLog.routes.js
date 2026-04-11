@@ -8,6 +8,6 @@ router.post('/', authMiddleware(['Doctor','Patient', 'Admin']), createLog);  // 
 router.get('/', authMiddleware(['Patient', 'Doctor', 'Admin','Official']), getLogs);
 router.get('/:id', authMiddleware(['Patient', 'Doctor', 'Admin','Official']), getLogById);
 router.put('/:id', authMiddleware(['Doctor', 'Admin']), updateLog);
-router.delete('/:id', authMiddleware(['Admin','Official']), deleteLog);  // Only admins delete
+router.delete('/:id', authMiddleware(['Admin','Official']), deleteLog);
 
 module.exports = router;

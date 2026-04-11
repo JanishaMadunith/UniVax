@@ -22,6 +22,7 @@ import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
 import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
 import DoctorCreateLog from './components/doctor/DoctorCreateLog';
+import DoctorLogs from './components/doctor/DoctorLogs';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
 
         <Route path="/patient/immunization-logs" element={<PatientImmunizationLogs />} />
         <Route path="/doctor/create-log" element={<DoctorCreateLog />} />
+        <Route path="/doctor/logs" element={<DoctorLogs />} />
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />

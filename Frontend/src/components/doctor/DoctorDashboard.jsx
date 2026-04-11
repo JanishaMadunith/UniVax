@@ -10,7 +10,6 @@ const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
@@ -19,15 +18,12 @@ const DoctorDashboard = () => {
 
   const fetchPatients = async () => {
     try {
-      setLoading(true);
       const response = await userAPI.getAllUsers();
       const patientsList = response.users?.filter(user => user.role === 'Patient') || [];
       setPatients(patientsList);
     } catch (error) {
       toast.error('Failed to fetch patients');
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
