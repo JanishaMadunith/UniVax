@@ -10,6 +10,7 @@ const DoctorLogs = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState(null);
   const [editNotes, setEditNotes] = useState('');
+  const [recentlyUpdatedLogId, setRecentlyUpdatedLogId] = useState(null);
 
   const token = localStorage.getItem('token');
 
@@ -49,9 +50,14 @@ const DoctorLogs = () => {
         { notes: editNotes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      const updatedLogId = selectedLog._id;
       toast.success('Log updated successfully');
       setSelectedLog(null);
-      fetchLogs();
+      await fetchLogs();
+      setRecentlyUpdatedLogId(updatedLogId);
+      setTimeout(() => {
+        setRecentlyUpdatedLogId((currentId) => (currentId === updatedLogId ? null : currentId));
+      }, 3500);
     } catch (error) {
       console.error(error);
       toast.error('Failed to update log');
@@ -84,14 +90,27 @@ const DoctorLogs = () => {
             </thead>
             <tbody className="divide-y">
               {logs.map((log) => (
-                <tr key={log._id} className="hover:bg-gray-50">
+                <tr
+                  key={log._id}
+                  className={`hover:bg-gray-50 transition-colors duration-700 ${
+                    recentlyUpdatedLogId === log._id ? 'bg-emerald-50' : ''
+                  }`}
+                >
                   <td className="px-6 py-4">{log.userId?.name || 'Unknown'}</td>
                   <td className="px-6 py-4">{log.vaccineId?.name || 'Vaccine'}</td>
                   <td className="px-6 py-4">{log.brand}</td>
                   <td className="px-6 py-4">{new Date(log.dateAdministered).toLocaleDateString()}</td>
                   <td className="px-6 py-4">{log.clinic}</td>
                   <td className="px-6 py-4 max-w-xs truncate">{log.notes || 'No notes'}</td>
-                  <td className="px-6 py-4">{log.updatedAt ? new Date(log.updatedAt).toLocaleString() : '-'}</td>
+                  <td className="px-6 py-4">
+                    {recentlyUpdatedLogId === log._id ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                        Updated just now
+                      </span>
+                    ) : (
+                      log.updatedAt ? new Date(log.updatedAt).toLocaleString() : '-'
+                    )}
+                  </td>
                   <td className="px-6 py-4 flex gap-3">
                     <button onClick={() => handleEdit(log)} className="text-blue-600 hover:text-blue-800">
                       <Edit size={18} />

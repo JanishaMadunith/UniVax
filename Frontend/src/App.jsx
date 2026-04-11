@@ -20,6 +20,7 @@ import AdminClinics from './components/admin/AdminClinics';
 import AdminAppointments from './components/admin/AdminAppointments';
 import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
+import AdminLogs from './components/admin/AdminLogs';
 import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
 import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 import DoctorLogs from './components/doctor/DoctorLogs';
@@ -63,6 +64,7 @@ function App() {
         <Route path="/admin/appointments" element={<AdminAppointments />} />
         <Route path="/admin/vaccines" element={<AdminVaccines />} />
         <Route path="/admin/doses" element={<AdminDoses />} />
+        <Route path="/admin/logs" element={<AdminLogs />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/signup" />} />

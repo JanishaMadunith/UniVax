@@ -60,6 +60,12 @@ const AdminSidebar = () => {
           >
             Doses
           </Link>
+          <Link 
+            to="/admin/logs" 
+            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+          >
+            Logs
+          </Link>
         </nav>
       </div>
 
