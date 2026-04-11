@@ -363,15 +363,21 @@ const AdminClinics = () => {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">
                 {editingClinic ? 'Edit Clinic' : 'Add New Clinic'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-white hover:text-gray-200 text-2xl leading-none"
               >
                 ×
               </button>
