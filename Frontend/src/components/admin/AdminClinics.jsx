@@ -33,8 +33,11 @@ const AdminClinics = () => {
   const fetchClinics = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5001/api/V1/clinics');
-      setClinics(response.data);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5001/api/V1/clinics', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setClinics(response.data.clinics || []);
     } catch (error) {
       console.error('Error fetching clinics:', error);
       alert('Failed to fetch clinics');
@@ -110,13 +113,15 @@ const AdminClinics = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
+      const authHeader = { headers: { Authorization: `Bearer ${token}` } };
       if (editingClinic) {
         // Update clinic
-        await axios.put(`http://localhost:5001/api/V1/clinics/${editingClinic._id}`, formData);
+        await axios.put(`http://localhost:5001/api/V1/clinics/${editingClinic._id}`, formData, authHeader);
         alert('Clinic updated successfully');
       } else {
         // Create new clinic
-        await axios.post('http://localhost:5001/api/V1/clinics', formData);
+        await axios.post('http://localhost:5001/api/V1/clinics/create', formData, authHeader);
         alert('Clinic added successfully');
       }
       setShowModal(false);
@@ -131,7 +136,10 @@ const AdminClinics = () => {
   const handleDeleteClick = async (clinicId) => {
     if (window.confirm('Are you sure you want to delete this clinic?')) {
       try {
-        await axios.delete(`http://localhost:5001/api/V1/clinics/${clinicId}`);
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:5001/api/V1/clinics/${clinicId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         alert('Clinic deleted successfully');
         fetchClinics(); // Refresh the list
       } catch (error) {
