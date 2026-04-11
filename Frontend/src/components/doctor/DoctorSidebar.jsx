@@ -1,10 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { LogOut, User, FileText } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { LogOut, User } from 'lucide-react';
 import { usePatient } from '../../contexts/PatientContext';
 
 const DoctorSidebar = () => {
   const { selectedPatient } = usePatient();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
   const userName = (() => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
@@ -28,31 +31,51 @@ const DoctorSidebar = () => {
         <nav className="space-y-2">
           <Link 
             to="/doctor/dashboard" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/dashboard') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Dashboard
           </Link>
           <Link 
             to="/doctor/appointments" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/appointments') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Appointments
           </Link>
           <Link 
             to="/doctor/clinics" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/clinics') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Clinics
           </Link>
           <Link 
             to="/doctor/vaccines" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/vaccines') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Vaccines
           </Link>
           <Link 
             to="/doctor/doses" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/doses') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Doses
           </Link>
@@ -60,23 +83,33 @@ const DoctorSidebar = () => {
           {/* 🔥 YOUR IMMUNIZATION LOG LINK */}
           <Link 
             to="/doctor/create-log" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 "
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/create-log') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
-            <FileText size={20} />
             Create New Log
           </Link>
 
           <Link 
             to="/doctor/logs" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 "
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/logs') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
-            <FileText size={20} />
             Show Logs
           </Link>
 
           <Link 
             to="/doctor/profile" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/doctor/profile') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Profile
           </Link>

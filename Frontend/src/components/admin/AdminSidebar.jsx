@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { LogOut, User } from 'lucide-react';
 
 const AdminSidebar = () => {
   const [userName, setUserName] = useState('Admin');
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -26,43 +29,71 @@ const AdminSidebar = () => {
         <nav className="space-y-2">
           <Link 
             to="/admin/dashboard" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/dashboard') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Dashboard
           </Link>
           <Link 
             to="/admin/users" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/users') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Users
           </Link>
           <Link 
             to="/admin/clinics" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/clinics') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Clinics
           </Link>
           <Link 
             to="/admin/appointments" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/appointments') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Appointments
           </Link>
           <Link 
             to="/admin/vaccines" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/vaccines') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Vaccines
           </Link>
           <Link 
             to="/admin/doses" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/doses') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Doses
           </Link>
           <Link 
             to="/admin/logs" 
-            className="block px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200"
+            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive('/admin/logs') 
+                ? 'bg-white/30 font-semibold' 
+                : 'hover:bg-white/20'
+            }`}
           >
             Logs
           </Link>
