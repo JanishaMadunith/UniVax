@@ -64,18 +64,20 @@ const DoctorLogs = () => {
     }
   };
 
-  if (loading) return <div className="p-8">Loading logs...</div>;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50">
       <DoctorSidebar />
 
       <div className="ml-64 px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Logs</h1>
-        <p className="text-gray-600 mb-8">View and edit all immunization records</p>
+        {loading ? (
+          <div className="p-8 text-center">Loading logs...</div>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Logs</h1>
+            <p className="text-gray-600 mb-8">View and edit all immunization records</p>
 
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <table className="min-w-full">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left">Patient</th>
@@ -119,8 +121,10 @@ const DoctorLogs = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Edit Modal */}
