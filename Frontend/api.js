@@ -144,6 +144,29 @@ export const doseAPI = {
 // ============== USER API CALLS ==============
 
 export const userAPI = {
+  // Update own profile (JWT-based, no ID in URL)
+  updateOwnProfile: async (data) => {
+    return makeRequest('/api/V1/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Upload profile picture (multipart – cannot use makeRequest's JSON Content-Type)
+  uploadProfilePic: async (formData) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/V1/users/profile/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || 'Upload failed');
+    }
+    return response.json();
+  },
+
   // Get all users
   getAllUsers: async () => {
     try {

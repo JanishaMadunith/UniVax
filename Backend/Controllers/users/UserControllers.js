@@ -107,6 +107,19 @@ const updateOwnProfile = async (req, res, next) => {
     }
 };
 
+// Upload profile picture
+const uploadProfilePic = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+        const result = await UserService.uploadProfilePic(req.user.id, req.file.buffer);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
 // Delete user
 const deleteUser = async (req, res, next) => {
     try {
@@ -134,4 +147,5 @@ exports.getAllUsers = getAllUsers;
 exports.getById = getById;
 exports.updateUser = updateUser;
 exports.updateOwnProfile = updateOwnProfile;
+exports.uploadProfilePic = uploadProfilePic;
 exports.deleteUser = deleteUser;

@@ -1,5 +1,6 @@
 const User = require("../../Model/users/UserModel");
 const jwt = require("jsonwebtoken");
+const cloudinary = require('../../config/cloudinary');
 
 class UserService {
   // Generate JWT Token
@@ -121,6 +122,7 @@ class UserService {
         address: user.address,
         accountStatus: user.accountStatus,
         rememberMe: user.rememberMe,
+        profilePic: user.profilePic || '',
         ...(user.role === 'Doctor' && { doctorCredentials: user.doctorCredentials })
       }
     };
@@ -192,15 +194,38 @@ class UserService {
     };
   }
 
+  // Upload profile pic to Cloudinary and save URL
+  async uploadProfilePic(userId, buffer) {
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          { folder: 'univax/profiles', transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'auto' }] },
+          (error, res) => { if (error) reject(error); else resolve(res); }
+        )
+        .end(buffer);
+    });
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: result.secure_url },
+      { new: true }
+    ).select('-password');
+
+    if (!user) throw new Error('User not found');
+
+    return { success: true, profilePic: result.secure_url, user };
+  }
+
   // Update own profile using JWT
   async updateOwnProfile(userId, data) {
-    const { name, email, phone, address, doctorCredentials } = data;
+    const { name, email, phone, address, doctorCredentials, profilePic } = data;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (phone) updateData.phone = phone;
     if (address) updateData.address = address;
+    if (profilePic) updateData.profilePic = profilePic;
     
     // Only allow doctors to update their credentials
     const user = await User.findById(userId);
