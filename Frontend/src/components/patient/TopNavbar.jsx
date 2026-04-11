@@ -25,7 +25,8 @@ const TopNavbar = () => {
   const navItems = [
     { path: '/patient/dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { path: '/patient/clinics', name: 'Clinics', icon: Building2 },
-    { path: '/patient/immunization-logs', name: 'Logs', icon: FileText },        // ← YOUR LINK
+    { path: '/patient/my-appointments', name: 'My Appointments', icon: Calendar },
+    { path: '/patient/immunization-logs', name: 'Logs', icon: FileText },
     { path: '/patient/about', name: 'About Us', icon: Info },
   ];
 

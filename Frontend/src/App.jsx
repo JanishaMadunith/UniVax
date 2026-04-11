@@ -22,6 +22,7 @@ import AdminDoses from './components/admin/AdminDoses';
 import AdminLogs from './components/admin/AdminLogs';
 import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
 import PatientAppointments from './components/patient/Appointments';
+import MyAppointments from './components/patient/MyAppointments';
 import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 import DoctorLogs from './components/doctor/DoctorLogs';
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient/clinics" element={<PatientClinics />} />
         <Route path="/patient/appointments" element={<PatientAppointments />} />
+        <Route path="/patient/my-appointments" element={<MyAppointments />} />
         <Route path="/patient/about" element={<PatientAbout />} />
 
         {/* Doctor Routes */}

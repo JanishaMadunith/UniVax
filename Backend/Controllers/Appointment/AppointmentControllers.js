@@ -1,4 +1,6 @@
 const AppointmentService = require("../../Services/Appointment/AppointmentService");
+const ClinicService = require("../../Services/Appointment/ClinicService");
+const { validateAppointmentSchedule } = require("../../Services/Appointment/AppointmentScheduleValidation");
 
 // Create Appointment
 const createAppointment = async (req, res, next) => {
@@ -9,18 +11,51 @@ const createAppointment = async (req, res, next) => {
             email,
             phone,
             vaccineType,
-            doseNumber,
             ageGroup,
             appointmentDate,
             appointmentTime
         } = req.body;
 
-        // Validation
-        if (!clinicId || !fullName || !email || !phone || !vaccineType || !doseNumber || !ageGroup || !appointmentDate || !appointmentTime) {
+        // Validation – required fields
+        if (!clinicId || !fullName || !email || !phone || !vaccineType || !ageGroup || !appointmentDate || !appointmentTime) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
             });
+        }
+
+        // Schedule validation – verify date/time against clinic schedule
+        const clinicResult = await ClinicService.getClinicById(clinicId);
+        if (!clinicResult.success) {
+            return res.status(404).json({ success: false, message: "Clinic not found" });
+        }
+        const scheduleCheck = validateAppointmentSchedule(
+            { appointmentDate, appointmentTime },
+            clinicResult.clinic
+        );
+        if (!scheduleCheck.valid) {
+            return res.status(400).json({
+                success: false,
+                message: scheduleCheck.errors.join('. ')
+            });
+        }
+
+        // Duplicate vaccine check – prevent booking same vaccine while active booking exists
+        const existingAppointments = await AppointmentService.getAppointmentsByEmail(email);
+        if (existingAppointments.data && existingAppointments.data.length > 0) {
+            const duplicate = existingAppointments.data.find(apt => {
+                const aptDate = new Date(apt.appointmentDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return apt.vaccineType === vaccineType && aptDate >= today;
+            });
+            if (duplicate) {
+                const clinicName = duplicate.clinicId?.clinicName || 'another clinic';
+                return res.status(400).json({
+                    success: false,
+                    message: `You already have an active appointment for ${vaccineType} at ${clinicName}. Please cancel it first or wait until it is completed.`
+                });
+            }
         }
 
         const result = await AppointmentService.createAppointment({
@@ -29,7 +64,6 @@ const createAppointment = async (req, res, next) => {
             email,
             phone,
             vaccineType,
-            doseNumber,
             ageGroup,
             appointmentDate,
             appointmentTime
@@ -85,7 +119,6 @@ const updateAppointment = async (req, res, next) => {
             email,
             phone,
             vaccineType,
-            doseNumber,
             ageGroup,
             appointmentDate,
             appointmentTime
@@ -99,7 +132,6 @@ const updateAppointment = async (req, res, next) => {
                 email,
                 phone,
                 vaccineType,
-                doseNumber,
                 ageGroup,
                 appointmentDate,
                 appointmentTime
@@ -165,3 +197,19 @@ exports.getAppointmentById = getAppointmentById;
 exports.updateAppointment = updateAppointment;
 exports.deleteAppointment = deleteAppointment;
 exports.getAppointmentsByEmail = getAppointmentsByEmail;
+
+// Patch Appointment (partial update – currentDose, appointmentDate)
+const patchAppointment = async (req, res, next) => {
+    try {
+        const result = await AppointmentService.patchAppointment(req.params.id, req.body);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Patch appointment error:", error);
+        res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Server error while patching appointment"
+        });
+    }
+};
+
+exports.patchAppointment = patchAppointment;

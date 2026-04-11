@@ -167,3 +167,41 @@ exports.getAppointmentById = getAppointmentById;
 exports.updateAppointment = updateAppointment;
 exports.deleteAppointment = deleteAppointment;
 exports.getAppointmentsByEmail = getAppointmentsByEmail;
+
+// Patch Appointment Service (partial update)
+const patchAppointment = async (appointmentId, patchData) => {
+    try {
+        const allowedFields = ['currentDose', 'appointmentDate', 'appointmentTime'];
+        const update = {};
+        for (const key of allowedFields) {
+            if (patchData[key] !== undefined) {
+                update[key] = patchData[key];
+            }
+        }
+
+        const patched = await Appointment.findByIdAndUpdate(
+            appointmentId,
+            { $set: update },
+            { new: true, runValidators: true }
+        );
+
+        if (!patched) {
+            throw { status: 404, message: "Appointment not found" };
+        }
+
+        return {
+            success: true,
+            message: "Appointment patched successfully",
+            appointment: patched
+        };
+    } catch (error) {
+        if (error.status) throw error;
+        throw {
+            status: 500,
+            message: "Server error while patching appointment",
+            error: error.message
+        };
+    }
+};
+
+exports.patchAppointment = patchAppointment;

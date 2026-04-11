@@ -28,10 +28,6 @@ const appointmentSchema = new Schema({
         required: true,
         trim: true
     },
-    doseNumber: {
-        type: Number,
-        required: true
-    },
     ageGroup: {
         type: String,
         required: true
@@ -43,6 +39,10 @@ const appointmentSchema = new Schema({
     appointmentTime: {
         type: String,
         required: true
+    },
+    currentDose: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

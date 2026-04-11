@@ -37,6 +37,12 @@ class UserService {
       throw new Error("User already exists with this email");
     }
 
+    // Check if name is already taken
+    const existingName = await User.findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } });
+    if (existingName) {
+      throw new Error("This name is already taken. Please use a unique name.");
+    }
+
     // Create new user
     const user = new User({
       name,

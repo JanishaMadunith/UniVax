@@ -10,6 +10,7 @@ router.get("/",authMiddleware(['Admin']), AppointmentController.getAllAppointmen
 router.get("/user/:email",authMiddleware(['Patient', 'Doctor', 'Admin']), AppointmentController.getAppointmentsByEmail);
 router.get("/:id",authMiddleware(['Patient', 'Doctor', 'Admin']), AppointmentController.getAppointmentById);
 router.put("/:id",authMiddleware(['Patient', 'Admin']), AppointmentController.updateAppointment);
+router.patch("/:id",authMiddleware(['Doctor', 'Admin']), AppointmentController.patchAppointment);
 router.delete("/:id",authMiddleware(['Patient', 'Admin']), AppointmentController.deleteAppointment);
 
 module.exports = router;

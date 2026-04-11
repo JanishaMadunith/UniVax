@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, Calendar, Clock, Syringe, AlertCircle, 
   CheckCircle, XCircle, MapPin, ChevronRight, History, 
-  Calendar as CalendarIcon, Filter, ChevronDown, Building2
+  Calendar as CalendarIcon, Filter, ChevronDown, Building2, Info
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import TopNavbar from './TopNavbar';
 import { useLocation } from 'react-router-dom';
+import {
+  isDateAvailable,
+  getNextAvailableDate,
+  formatTimeTo12Hour,
+  getDayAbbreviations,
+} from '../../utils/clinicScheduleValidation';
+import { validateAppointmentForm } from '../../utils/appointmentValidation';
 
 const Appointments = () => {
   const location = useLocation();
@@ -25,7 +32,6 @@ const Appointments = () => {
     email: '',
     phone: '',
     vaccineType: '',
-    doseNumber: '',
     ageGroup: '',
     appointmentDate: '',
     appointmentTime: ''
@@ -33,6 +39,16 @@ const Appointments = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Derive the selected clinic object from the pre-passed clinicId or form state
+  const selectedClinic = clinics.find(
+    (c) => c._id === (passedClinicId || formData.clinicId)
+  ) || null;
+
+  // Build schedule constraints from the selected clinic
+  const openDays = selectedClinic?.openDays || [];
+  const openTime = selectedClinic?.openTime || '';
+  const closeTime = selectedClinic?.closeTime || '';
 
   // Fetch user email from localStorage/auth context on mount
   useEffect(() => {
@@ -142,12 +158,7 @@ const Appointments = () => {
 
   // VALIDATION
   const validateForm = () => {
-    const newErrors = {};
-    Object.keys(formData).forEach(field => {
-      if (!formData[field]) {
-        newErrors[field] = 'This field is required';
-      }
-    });
+    const newErrors = validateAppointmentForm(formData, selectedClinic);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -158,9 +169,20 @@ const Appointments = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value,
-      // Reset vaccine selection when clinic changes
-      ...(name === 'clinicId' ? { vaccineType: '' } : {})
+      // Reset vaccine and schedule fields when clinic changes
+      ...(name === 'clinicId' ? { vaccineType: '', appointmentDate: '', appointmentTime: '' } : {})
     }));
+
+    // Inline validation feedback for schedule-sensitive fields
+    if (name === 'appointmentDate') {
+      if (value && !isDateAvailable(value, openDays)) {
+        const dayName = new Date(value + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+        setErrors(prev => ({ ...prev, appointmentDate: `Clinic is closed on ${dayName}` }));
+      } else {
+        setErrors(prev => ({ ...prev, appointmentDate: '' }));
+      }
+      return;
+    }
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -172,8 +194,27 @@ const Appointments = () => {
   // SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) {
-      toast.warning('Please fill all fields!');
+    const newErrors = validateAppointmentForm(formData, selectedClinic);
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const fieldLabels = {
+        clinicId: 'Vaccination Center',
+        fullName: 'Full Name',
+        email: 'Email',
+        phone: 'Phone Number',
+        vaccineType: 'Vaccine Type',
+        ageGroup: 'Age Group',
+        appointmentDate: 'Appointment Date',
+        appointmentTime: 'Appointment Time',
+      };
+      const missingFields = Object.keys(newErrors)
+        .map(k => fieldLabels[k] || k)
+        .join(', ');
+      toast.warning(`Please fix: ${missingFields}`);
+      // Scroll to first error
+      const firstErrorEl = document.querySelector('[data-error="true"]');
+      if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -186,8 +227,7 @@ const Appointments = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          ...formData,
-          doseNumber: Number(formData.doseNumber)
+          ...formData
         })
       });
 
@@ -200,7 +240,6 @@ const Appointments = () => {
           email: '',
           phone: '',
           vaccineType: '',
-          doseNumber: '',
           ageGroup: '',
           appointmentDate: '',
           appointmentTime: ''
@@ -233,6 +272,23 @@ const Appointments = () => {
             <p className="text-gray-600 mt-2">Schedule your vaccination and manage your appointments</p>
           </div>
 
+          {/* No clinic selected warning */}
+          {!passedClinicId && (
+            <div className="mb-6 p-5 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-800">No vaccination center selected</p>
+                <p className="text-sm text-amber-700 mt-1">Please choose a clinic first, then click the <strong>Book</strong> button on that clinic's card.</p>
+                <a
+                  href="/patient/clinics"
+                  className="inline-block mt-3 px-4 py-2 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition"
+                >
+                  Browse Clinics
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Side - Form (2/3 width) */}
             <div className="lg:w-2/3">
@@ -260,33 +316,12 @@ const Appointments = () => {
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Clinic Selector */}
-                    <div className="mb-2">
-                      <label className="text-sm font-semibold text-gray-700 block mb-2">
-                        Vaccination Center <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <select
-                          name="clinicId"
-                          value={formData.clinicId}
-                          onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                            errors.clinicId ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                          }`}
-                        >
-                          <option value="">Select a vaccination center</option>
-                          {clinics.map((clinic) => (
-                            <option key={clinic._id} value={clinic._id}>
-                              {clinic.clinicName} — {clinic.city}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {passedClinicName && formData.clinicId === passedClinicId && (
-                        <p className="text-xs text-teal-600 mt-1">Pre-selected: {passedClinicName}</p>
-                      )}
-                      {errors.clinicId && <p className="text-xs text-red-500 mt-1">{errors.clinicId}</p>}
+                    {/* Clinic Display - Read Only */}
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                      <p className="text-xs font-medium text-blue-600 mb-1">Selected Vaccination Center</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {passedClinicName || (formData.clinicId ? clinics.find(c => c._id === formData.clinicId)?.clinicName : 'No clinic selected')}
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -304,6 +339,7 @@ const Appointments = () => {
                             onChange={handleChange}
                             placeholder="Enter your full name"
                             readOnly
+                            data-error={errors.fullName ? 'true' : undefined}
                             className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-100 cursor-not-allowed ${
                               errors.fullName ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
                             }`}
@@ -326,6 +362,7 @@ const Appointments = () => {
                             onChange={handleChange}
                             placeholder="your@email.com"
                             readOnly
+                            data-error={errors.email ? 'true' : undefined}
                             className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-100 cursor-not-allowed ${
                               errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
                             }`}
@@ -347,6 +384,7 @@ const Appointments = () => {
                             value={formData.phone}
                             onChange={handleChange}
                             placeholder="071 234 5678"
+                            data-error={errors.phone ? 'true' : undefined}
                             className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                               errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
                             }`}
@@ -395,27 +433,6 @@ const Appointments = () => {
                         {errors.vaccineType && <p className="text-xs text-red-500 mt-1">{errors.vaccineType}</p>}
                       </div>
 
-                      {/* Dose Number */}
-                      <div>
-                        <label className="text-sm font-semibold text-gray-700 block mb-2">
-                          Dose Number <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          name="doseNumber"
-                          value={formData.doseNumber}
-                          onChange={handleChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                            errors.doseNumber ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                          }`}
-                        >
-                          <option value="">Select Dose</option>
-                          <option value="1">Dose 1</option>
-                          <option value="2">Dose 2</option>
-                          <option value="3">Dose 3 (Booster)</option>
-                        </select>
-                        {errors.doseNumber && <p className="text-xs text-red-500 mt-1">{errors.doseNumber}</p>}
-                      </div>
-
                       {/* Age Group */}
                       <div>
                         <label className="text-sm font-semibold text-gray-700 block mb-2">
@@ -442,6 +459,12 @@ const Appointments = () => {
                         <label className="text-sm font-semibold text-gray-700 block mb-2">
                           Appointment Date <span className="text-red-500">*</span>
                         </label>
+                        {openDays.length > 0 && (
+                          <p className="text-xs text-blue-600 mb-2 flex items-center gap-1">
+                            <Info className="w-3 h-3" />
+                            Open: {getDayAbbreviations(openDays).join(' · ')}
+                          </p>
+                        )}
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input
@@ -449,13 +472,20 @@ const Appointments = () => {
                             name="appointmentDate"
                             value={formData.appointmentDate}
                             onChange={handleChange}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={openDays.length > 0 ? getNextAvailableDate(openDays) : new Date().toISOString().split('T')[0]}
                             className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                               errors.appointmentDate ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
                             }`}
                           />
                         </div>
-                        {errors.appointmentDate && <p className="text-xs text-red-500 mt-1">{errors.appointmentDate}</p>}
+                        {errors.appointmentDate
+                          ? <p className="text-xs text-red-500 mt-1">{errors.appointmentDate}</p>
+                          : formData.appointmentDate && openDays.length > 0 && isDateAvailable(formData.appointmentDate, openDays) && (
+                              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" /> Clinic is open on this day
+                              </p>
+                            )
+                        }
                       </div>
 
                       {/* Time */}
@@ -463,6 +493,12 @@ const Appointments = () => {
                         <label className="text-sm font-semibold text-gray-700 block mb-2">
                           Appointment Time <span className="text-red-500">*</span>
                         </label>
+                        {openTime && closeTime && (
+                          <p className="text-xs text-blue-600 mb-2 flex items-center gap-1">
+                            <Info className="w-3 h-3" />
+                            Hours: {formatTimeTo12Hour(openTime)} – {formatTimeTo12Hour(closeTime)}
+                          </p>
+                        )}
                         <div className="relative">
                           <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input
@@ -470,6 +506,8 @@ const Appointments = () => {
                             name="appointmentTime"
                             value={formData.appointmentTime}
                             onChange={handleChange}
+                            min={openTime || undefined}
+                            max={closeTime || undefined}
                             className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                               errors.appointmentTime ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
                             }`}
@@ -479,12 +517,19 @@ const Appointments = () => {
                       </div>
                     </div>
 
+                    {errors.clinicId && (
+                      <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-700 text-sm flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        {errors.clinicId}
+                      </div>
+                    )}
+
                     {/* Submit Button */}
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !passedClinicId}
                       className={`w-full py-4 rounded-xl text-white font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                        isSubmitting
+                        isSubmitting || !passedClinicId
                           ? 'bg-gray-400 cursor-not-allowed'
                           : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:scale-[1.01]'
                       }`}
@@ -544,7 +589,6 @@ const Appointments = () => {
                             <Clock className="w-3 h-3" />
                             {apt.appointmentTime}
                           </p>
-                          <p className="text-sm font-medium text-gray-700 mt-2">Dose {apt.doseNumber}</p>
                         </div>
                       ))}
                     </div>
@@ -618,7 +662,6 @@ const Appointments = () => {
                             <Clock className="w-3 h-3" />
                             {apt.appointmentTime}
                           </p>
-                          <p className="text-sm font-medium text-gray-700 mt-2">Dose {apt.doseNumber}</p>
                         </div>
                       ))}
                     </div>

@@ -258,3 +258,68 @@ export const immunizationLogAPI = {
     });
   },
 };
+
+// ============== APPOINTMENT API CALLS ==============
+
+export const appointmentAPI = {
+  // Get all appointments (Admin)
+  getAllAppointments: async () => {
+    try {
+      return await makeRequest('/api/V1/appointments', {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No appointments found')) {
+        return { success: true, count: 0, appointments: [] };
+      }
+      throw error;
+    }
+  },
+
+  // Get appointments by user email
+  getByEmail: async (email) => {
+    try {
+      return await makeRequest(`/api/V1/appointments/user/${email}`, {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No appointments found')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
+  },
+
+  // Patch appointment (partial update – currentDose, appointmentDate)
+  patchAppointment: async (id, patchData) => {
+    return makeRequest(`/api/V1/appointments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patchData),
+    });
+  },
+
+  // Delete appointment
+  deleteAppointment: async (id) => {
+    return makeRequest(`/api/V1/appointments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============== CLINIC API CALLS ==============
+
+export const clinicAPI = {
+  // Get all clinics
+  getAllClinics: async () => {
+    try {
+      return await makeRequest('/api/V1/clinics', {
+        method: 'GET',
+      });
+    } catch (error) {
+      if (error.message.includes('No clinics found')) {
+        return { success: true, count: 0, data: [] };
+      }
+      throw error;
+    }
+  },
+};
