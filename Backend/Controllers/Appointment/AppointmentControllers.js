@@ -4,6 +4,7 @@ const AppointmentService = require("../../Services/Appointment/AppointmentServic
 const createAppointment = async (req, res, next) => {
     try {
         const {
+            clinicId,
             fullName,
             email,
             phone,
@@ -15,7 +16,7 @@ const createAppointment = async (req, res, next) => {
         } = req.body;
 
         // Validation
-        if (!fullName || !email || !phone || !vaccineType || !doseNumber || !ageGroup || !appointmentDate || !appointmentTime) {
+        if (!clinicId || !fullName || !email || !phone || !vaccineType || !doseNumber || !ageGroup || !appointmentDate || !appointmentTime) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -23,6 +24,7 @@ const createAppointment = async (req, res, next) => {
         }
 
         const result = await AppointmentService.createAppointment({
+            clinicId,
             fullName,
             email,
             phone,
@@ -78,6 +80,7 @@ const getAppointmentById = async (req, res, next) => {
 const updateAppointment = async (req, res, next) => {
     try {
         const {
+            clinicId,
             fullName,
             email,
             phone,
@@ -91,6 +94,7 @@ const updateAppointment = async (req, res, next) => {
         const result = await AppointmentService.updateAppointment(
             req.params.id,
             {
+                clinicId,
                 fullName,
                 email,
                 phone,

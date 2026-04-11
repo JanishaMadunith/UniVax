@@ -12,7 +12,8 @@ import {
   Filter,
   X,
   ChevronRight,
-  Building2
+  Building2,
+  Syringe
 } from 'lucide-react';
 import TopNavbar from './TopNavbar';
 import { Link } from 'react-router-dom';
@@ -24,12 +25,23 @@ const Clinics = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [selectedVaccine, setSelectedVaccine] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [error, setError] = useState('');
 
   // Extract unique cities and clinic types from actual data
   const cities = [...new Set(clinics.map(clinic => clinic.city).filter(Boolean))];
   const clinicTypes = [...new Set(clinics.map(clinic => clinic.clinicType).filter(Boolean))];
+
+  // Extract unique vaccine names from all clinics
+  const vaccineNames = [...new Set(
+    clinics.flatMap(clinic =>
+      (clinic.availableVaccines || [])
+        .filter(v => v.vaccineId && v.quantity > 0)
+        .map(v => v.vaccineId.name)
+        .filter(Boolean)
+    )
+  )];
 
   // Placeholder images for clinics
   const placeholderImages = [
@@ -91,14 +103,17 @@ const Clinics = () => {
     
     const matchesCity = !selectedCity || clinic.city === selectedCity;
     const matchesType = !selectedType || clinic.clinicType === selectedType;
+    const matchesVaccine = !selectedVaccine || 
+      (clinic.availableVaccines || []).some(v => v.vaccineId?.name === selectedVaccine && v.quantity > 0);
     
-    return matchesSearch && matchesCity && matchesType;
+    return matchesSearch && matchesCity && matchesType && matchesVaccine;
   });
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCity('');
     setSelectedType('');
+    setSelectedVaccine('');
   };
 
   // Format days display
@@ -162,9 +177,9 @@ const Clinics = () => {
                     >
                       <Filter className="w-4 h-4" />
                       <span>Filters</span>
-                      {(selectedCity || selectedType) && (
+                      {(selectedCity || selectedType || selectedVaccine) && (
                         <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                          {(selectedCity ? 1 : 0) + (selectedType ? 1 : 0)}
+                          {(selectedCity ? 1 : 0) + (selectedType ? 1 : 0) + (selectedVaccine ? 1 : 0)}
                         </span>
                       )}
                     </button>
@@ -172,9 +187,9 @@ const Clinics = () => {
                 </div>
 
                 {/* Filter Options */}
-                {showFilters && (cities.length > 0 || clinicTypes.length > 0) && (
+                {showFilters && (cities.length > 0 || clinicTypes.length > 0 || vaccineNames.length > 0) && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {cities.length > 0 && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
@@ -205,8 +220,23 @@ const Clinics = () => {
                           </select>
                         </div>
                       )}
+                      {vaccineNames.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Vaccine</label>
+                          <select
+                            value={selectedVaccine}
+                            onChange={(e) => setSelectedVaccine(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">All Vaccines</option>
+                            {vaccineNames.map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
-                    {(selectedCity || selectedType || searchTerm) && (
+                    {(selectedCity || selectedType || selectedVaccine || searchTerm) && (
                       <div className="mt-4 flex justify-end">
                         <button
                           onClick={clearFilters}
@@ -351,6 +381,22 @@ const Clinics = () => {
                                   </span>
                                 );
                               })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Available Vaccines */}
+                        {clinic.availableVaccines && clinic.availableVaccines.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                              <Syringe className="w-3 h-3" /> Available Vaccines
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {clinic.availableVaccines.filter(v => v.vaccineId && v.quantity > 0).map((v, idx) => (
+                                <span key={idx} className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">
+                                  {v.vaccineId.name} ({v.quantity})
+                                </span>
+                              ))}
                             </div>
                           </div>
                         )}

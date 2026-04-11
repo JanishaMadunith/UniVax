@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const appointmentSchema = new Schema({
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ClinicModel',
+        required: true
+    },
     fullName: {
         type: String,
         required: true,

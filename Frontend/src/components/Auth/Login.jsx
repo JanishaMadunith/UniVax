@@ -87,9 +87,9 @@ const Login = () => {
       if (response.ok) {
         const user = data.user;
 
-        // Warning for Doctor/Admin without checkbox
+        // Verify role matches login mode
         if (!formData.isPrivilegedLogin && (user.role === 'Doctor' || user.role === 'Admin')) {
-          const message = 'Please login according to your role (Doctor/Admin).';
+          const message = 'Invalid login attempt. Please check your credentials and role selection.';
           setErrors({ submit: message });
           toast.error(message);
           setIsSubmitting(false);
@@ -98,7 +98,7 @@ const Login = () => {
 
         // Warning for Patient with checkbox
         if (formData.isPrivilegedLogin && user.role === 'Patient') {
-          const message = 'Please login as a Patient without selecting Doctor/Admin.';
+          const message = 'Invalid login attempt. Please check your credentials and role selection.';
           setErrors({ submit: message });
           toast.error(message);
           setIsSubmitting(false);

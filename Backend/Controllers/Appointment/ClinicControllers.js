@@ -14,7 +14,8 @@ const createClinic = async (req, res) => {
             description,
             openDays,
             openTime,
-            closeTime
+            closeTime,
+            availableVaccines
         } = req.body;
 
         
@@ -37,7 +38,8 @@ const createClinic = async (req, res) => {
             description,
             openDays,
             openTime,
-            closeTime
+            closeTime,
+            availableVaccines: availableVaccines || []
         });
 
         res.status(201).json(result);

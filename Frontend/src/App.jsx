@@ -4,7 +4,6 @@ import { PatientProvider } from './contexts/PatientContext';
 import SignUp from './components/Auth/Signup';
 import Login from './components/Auth/Login';
 import Landing from './components/Auth/Landing';
-import PatientAppointments from './components/patient/Appointments';
 import PatientDashboard from './components/patient/Dashboard';
 import PatientClinics from './components/patient/Clinics';
 import PatientAbout from './components/patient/About';
@@ -22,6 +21,7 @@ import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
 import AdminLogs from './components/admin/AdminLogs';
 import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
+import PatientAppointments from './components/patient/Appointments';
 import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 import DoctorLogs from './components/doctor/DoctorLogs';
 

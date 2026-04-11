@@ -2,19 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, Calendar, Clock, Syringe, AlertCircle, 
   CheckCircle, XCircle, MapPin, ChevronRight, History, 
-  Calendar as CalendarIcon, Filter, ChevronDown
+  Calendar as CalendarIcon, Filter, ChevronDown, Building2
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import TopNavbar from './TopNavbar';
+import { useLocation } from 'react-router-dom';
 
 const Appointments = () => {
+  const location = useLocation();
+  const { clinicId: passedClinicId, clinicName: passedClinicName } = location.state || {};
+
   // Get logged-in user email (you can get this from auth context/localStorage)
   const [userEmail, setUserEmail] = useState('');
   const [userAppointments, setUserAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [appointmentError, setAppointmentError] = useState('');
+  const [clinics, setClinics] = useState([]);
 
   const [formData, setFormData] = useState({
+    clinicId: passedClinicId || '',
     fullName: '',
     email: '',
     phone: '',
@@ -52,7 +58,25 @@ const Appointments = () => {
     } else {
       console.warn('No email found in localStorage');
     }
+
+    // Fetch clinics for dropdown
+    fetchClinics();
   }, []);
+
+  const fetchClinics = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5001/api/V1/clinics', {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setClinics(data.clinics || []);
+      }
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+    }
+  };
 
   // Fetch user's appointments
   const fetchUserAppointments = async (email) => {
@@ -93,41 +117,6 @@ const Appointments = () => {
     }
   };
 
-  // Sample appointments for demo (remove this when backend is ready)
-  const getSampleAppointments = () => {
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + 5);
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - 10);
-    
-    return [
-      {
-        _id: '1',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        phone: '0712345678',
-        vaccineType: 'COVID-19',
-        doseNumber: 2,
-        ageGroup: 'adult',
-        appointmentDate: futureDate.toISOString(),
-        appointmentTime: '10:30 AM',
-        status: 'upcoming'
-      },
-      {
-        _id: '2',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        phone: '0712345678',
-        vaccineType: 'COVID-19',
-        doseNumber: 1,
-        ageGroup: 'adult',
-        appointmentDate: pastDate.toISOString(),
-        appointmentTime: '09:00 AM',
-        status: 'completed'
-      }
-    ];
-  };
 
   // Filter appointments
   const today = new Date();
@@ -166,7 +155,12 @@ const Appointments = () => {
   // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // Reset vaccine selection when clinic changes
+      ...(name === 'clinicId' ? { vaccineType: '' } : {})
+    }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -201,6 +195,7 @@ const Appointments = () => {
       if (response.ok) {
         toast.success('Appointment booked successfully!');
         setFormData({
+          clinicId: '',
           fullName: '',
           email: '',
           phone: '',
@@ -265,6 +260,35 @@ const Appointments = () => {
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Clinic Selector */}
+                    <div className="mb-2">
+                      <label className="text-sm font-semibold text-gray-700 block mb-2">
+                        Vaccination Center <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <select
+                          name="clinicId"
+                          value={formData.clinicId}
+                          onChange={handleChange}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                            errors.clinicId ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                          }`}
+                        >
+                          <option value="">Select a vaccination center</option>
+                          {clinics.map((clinic) => (
+                            <option key={clinic._id} value={clinic._id}>
+                              {clinic.clinicName} — {clinic.city}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {passedClinicName && formData.clinicId === passedClinicId && (
+                        <p className="text-xs text-teal-600 mt-1">Pre-selected: {passedClinicName}</p>
+                      )}
+                      {errors.clinicId && <p className="text-xs text-red-500 mt-1">{errors.clinicId}</p>}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {/* Full Name */}
                       <div>
@@ -336,21 +360,38 @@ const Appointments = () => {
                         <label className="text-sm font-semibold text-gray-700 block mb-2">
                           Vaccine Type <span className="text-red-500">*</span>
                         </label>
-                        <select
-                          name="vaccineType"
-                          value={formData.vaccineType}
-                          onChange={handleChange}
-                          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                            errors.vaccineType ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                          }`}
-                        >
-                          <option value="">Select Vaccine</option>
-                          <option value="COVID-19">COVID-19</option>
-                          <option value="Flu">Influenza (Flu)</option>
-                          <option value="HPV">HPV</option>
-                          <option value="Hepatitis B">Hepatitis B</option>
-                          <option value="MMR">MMR</option>
-                        </select>
+                        {(() => {
+                          const selectedClinic = clinics.find(c => c._id === formData.clinicId);
+                          const clinicVaccines = (selectedClinic?.availableVaccines || []).filter(v => v.vaccineId && v.quantity > 0);
+                          return (
+                            <select
+                              name="vaccineType"
+                              value={formData.vaccineType}
+                              onChange={handleChange}
+                              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                                errors.vaccineType ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                              }`}
+                            >
+                              <option value="">Select Vaccine</option>
+                              {clinicVaccines.length > 0
+                                ? clinicVaccines.map(v => (
+                                    <option key={v.vaccineId._id} value={v.vaccineId.name}>
+                                      {v.vaccineId.name} (Available: {v.quantity})
+                                    </option>
+                                  ))
+                                : (
+                                  <>
+                                    <option value="COVID-19">COVID-19</option>
+                                    <option value="Influenza (Flu)">Influenza (Flu)</option>
+                                    <option value="HPV">HPV</option>
+                                    <option value="Hepatitis B">Hepatitis B</option>
+                                    <option value="MMR">MMR</option>
+                                  </>
+                                )
+                              }
+                            </select>
+                          );
+                        })()}
                         {errors.vaccineType && <p className="text-xs text-red-500 mt-1">{errors.vaccineType}</p>}
                       </div>
 
@@ -489,6 +530,12 @@ const Appointments = () => {
                             <h4 className="font-semibold text-gray-800">{apt.vaccineType}</h4>
                             <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">Upcoming</span>
                           </div>
+                          {apt.clinicId && (
+                            <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                              <Building2 className="w-3 h-3" />
+                              {apt.clinicId.clinicName || 'N/A'}
+                            </p>
+                          )}
                           <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                             <Calendar className="w-3 h-3" />
                             {new Date(apt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
@@ -557,6 +604,12 @@ const Appointments = () => {
                               Completed
                             </span>
                           </div>
+                          {apt.clinicId && (
+                            <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                              <Building2 className="w-3 h-3" />
+                              {apt.clinicId.clinicName || 'N/A'}
+                            </p>
+                          )}
                           <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                             <Calendar className="w-3 h-3" />
                             {new Date(apt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
