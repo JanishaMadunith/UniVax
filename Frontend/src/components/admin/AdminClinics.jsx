@@ -8,6 +8,7 @@ const AdminClinics = () => {
   const [showModal, setShowModal] = useState(false);
   const [expandedClinic, setExpandedClinic] = useState(null);
   const [editingClinic, setEditingClinic] = useState(null);
+  const [allVaccines, setAllVaccines] = useState([]);
   const [formData, setFormData] = useState({
     clinicName: '',
     address: '',
@@ -19,16 +20,30 @@ const AdminClinics = () => {
     description: '',
     openDays: [],
     openTime: '',
-    closeTime: ''
+    closeTime: '',
+    availableVaccines: []
   });
 
   // Days of week for checkboxes
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  // Fetch all clinics
+  // Fetch all clinics and vaccines
   useEffect(() => {
     fetchClinics();
+    fetchVaccines();
   }, []);
+
+  const fetchVaccines = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5001/api/V1/vaccines', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAllVaccines(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching vaccines:', error);
+    }
+  };
 
   const fetchClinics = async () => {
     try {
@@ -62,6 +77,32 @@ const AdminClinics = () => {
     }));
   };
 
+  // Handle adding a vaccine row
+  const handleAddVaccine = () => {
+    setFormData(prev => ({
+      ...prev,
+      availableVaccines: [...prev.availableVaccines, { vaccineId: '', quantity: 0 }]
+    }));
+  };
+
+  // Handle removing a vaccine row
+  const handleRemoveVaccine = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      availableVaccines: prev.availableVaccines.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Handle vaccine selection or quantity change
+  const handleVaccineChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      availableVaccines: prev.availableVaccines.map((v, i) =>
+        i === index ? { ...v, [field]: field === 'quantity' ? Number(value) : value } : v
+      )
+    }));
+  };
+
   // Open modal for adding new clinic
   const handleAddClick = () => {
     setEditingClinic(null);
@@ -76,7 +117,8 @@ const AdminClinics = () => {
       description: '',
       openDays: [],
       openTime: '',
-      closeTime: ''
+      closeTime: '',
+      availableVaccines: []
     });
     setShowModal(true);
   };
@@ -95,7 +137,11 @@ const AdminClinics = () => {
       description: clinic.description,
       openDays: clinic.openDays,
       openTime: clinic.openTime,
-      closeTime: clinic.closeTime
+      closeTime: clinic.closeTime,
+      availableVaccines: (clinic.availableVaccines || []).map(v => ({
+        vaccineId: v.vaccineId?._id || v.vaccineId,
+        quantity: v.quantity || 0
+      }))
     });
     setShowModal(true);
   };
@@ -128,7 +174,8 @@ const AdminClinics = () => {
       fetchClinics(); // Refresh the list
     } catch (error) {
       console.error('Error saving clinic:', error);
-      alert('Failed to save clinic');
+      const msg = error.response?.data?.message || error.message || 'Failed to save clinic';
+      alert('Failed to save clinic: ' + msg);
     }
   };
 
@@ -348,6 +395,20 @@ const AdminClinics = () => {
                                   )}
                                 </div>
                               </div>
+
+                              {/* Available Vaccines */}
+                              {clinic.availableVaccines && clinic.availableVaccines.length > 0 && (
+                                <div className="bg-white rounded-lg p-4 shadow-sm md:col-span-2">
+                                  <h4 className="text-sm font-medium text-gray-500 mb-2">Available Vaccines</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {clinic.availableVaccines.map((v, idx) => (
+                                      <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                                        {v.vaccineId?.name || 'Unknown'} — Qty: {v.quantity}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -522,6 +583,55 @@ const AdminClinics = () => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Available Vaccines (Optional) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Available Vaccines (Optional)</label>
+                  <button
+                    type="button"
+                    onClick={handleAddVaccine}
+                    className="text-sm text-teal-600 hover:text-teal-800 font-medium"
+                  >
+                    + Add Vaccine
+                  </button>
+                </div>
+                {formData.availableVaccines.length > 0 ? (
+                  <div className="space-y-2">
+                    {formData.availableVaccines.map((v, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <select
+                          value={v.vaccineId}
+                          onChange={(e) => handleVaccineChange(index, 'vaccineId', e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        >
+                          <option value="">Select Vaccine</option>
+                          {allVaccines.map((vaccine) => (
+                            <option key={vaccine._id} value={vaccine._id}>{vaccine.name}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="0"
+                          value={v.quantity}
+                          onChange={(e) => handleVaccineChange(index, 'quantity', e.target.value)}
+                          placeholder="Qty"
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVaccine(index)}
+                          className="text-red-500 hover:text-red-700 px-2 py-2"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">No vaccines added. You can add them later when updating.</p>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

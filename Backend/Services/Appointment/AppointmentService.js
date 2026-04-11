@@ -22,7 +22,7 @@ const createAppointment = async (appointmentData) => {
 // Get All Appointments Service
 const getAllAppointments = async () => {
     try {
-        const appointments = await Appointment.find();
+        const appointments = await Appointment.find().populate('clinicId', 'clinicName address city');
 
         if (!appointments || appointments.length === 0) {
             throw {
@@ -51,7 +51,7 @@ const getAllAppointments = async () => {
 // Get Appointment by ID Service
 const getAppointmentById = async (appointmentId) => {
     try {
-        const appointment = await Appointment.findById(appointmentId);
+        const appointment = await Appointment.findById(appointmentId).populate('clinicId', 'clinicName address city');
 
         if (!appointment) {
             throw {
@@ -141,7 +141,7 @@ const deleteAppointment = async (appointmentId) => {
 const getAppointmentsByEmail = async (email) => {
     try {
         console.log('Service: Looking for appointments with email:', email);
-        const appointments = await Appointment.find({ email: email.toLowerCase() });
+        const appointments = await Appointment.find({ email: email.toLowerCase() }).populate('clinicId', 'clinicName address city');
         
         console.log('Service: Found appointments count:', appointments.length);
         console.log('Service: Appointments data:', appointments);
@@ -167,3 +167,41 @@ exports.getAppointmentById = getAppointmentById;
 exports.updateAppointment = updateAppointment;
 exports.deleteAppointment = deleteAppointment;
 exports.getAppointmentsByEmail = getAppointmentsByEmail;
+
+// Patch Appointment Service (partial update)
+const patchAppointment = async (appointmentId, patchData) => {
+    try {
+        const allowedFields = ['currentDose', 'appointmentDate', 'appointmentTime'];
+        const update = {};
+        for (const key of allowedFields) {
+            if (patchData[key] !== undefined) {
+                update[key] = patchData[key];
+            }
+        }
+
+        const patched = await Appointment.findByIdAndUpdate(
+            appointmentId,
+            { $set: update },
+            { new: true, runValidators: true }
+        );
+
+        if (!patched) {
+            throw { status: 404, message: "Appointment not found" };
+        }
+
+        return {
+            success: true,
+            message: "Appointment patched successfully",
+            appointment: patched
+        };
+    } catch (error) {
+        if (error.status) throw error;
+        throw {
+            status: 500,
+            message: "Server error while patching appointment",
+            error: error.message
+        };
+    }
+};
+
+exports.patchAppointment = patchAppointment;

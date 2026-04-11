@@ -15,10 +15,12 @@ import {
   Shield,
   Award,
   TrendingUp,
-  Heart
+  Heart,
+  ChevronDown
 } from 'lucide-react';
 import TopNavbar from './TopNavbar';
 import { Link } from 'react-router-dom';
+import { appointmentAPI, vaccineAPI, clinicAPI, immunizationLogAPI } from '../../../api';
 
 const Dashboard = () => {
   const [user, setUser] = useState({
@@ -26,78 +28,98 @@ const Dashboard = () => {
     fullName: 'John Doe'
   });
 
-  // Sample vaccination data
-  const vaccinationStatus = {
-    completed: 1,
-    upcoming: 1,
-    missed: 0,
-    total: 2,
-    vaccines: [
-      { name: 'COVID-19', doses: [
-        { dose: 1, status: 'completed', date: '2026-01-10' },
-        { dose: 2, status: 'upcoming', dueDate: '2026-04-15' }
-      ]}
-    ]
+  // Real vaccination progress state
+  const [appointments, setAppointments] = useState([]);
+  const [allVaccines, setAllVaccines] = useState([]);
+  const [selectedProgressVaccine, setSelectedProgressVaccine] = useState('');
+  const [progressData, setProgressData] = useState(null);
+  const [clinics, setClinics] = useState([]);
+  const [vaccinationHistory, setVaccinationHistory] = useState([]);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser({ name: storedUser.name || 'User', fullName: storedUser.name || 'User' });
+      fetchDashboardData(storedUser.email);
+    }
+  }, []);
+
+  const fetchDashboardData = async (email) => {
+    try {
+      const [aptRes, vacRes, clinicRes, logRes] = await Promise.all([
+        appointmentAPI.getByEmail(email),
+        vaccineAPI.getAllVaccines(),
+        clinicAPI.getAllClinics(),
+        immunizationLogAPI.getAllLogs()
+      ]);
+      const apts = Array.isArray(aptRes.data) ? aptRes.data : [];
+      const vacs = Array.isArray(vacRes.data) ? vacRes.data : [];
+      const cls = Array.isArray(clinicRes.clinics) ? clinicRes.clinics : [];
+      const logs = Array.isArray(logRes.data) ? logRes.data : (Array.isArray(logRes) ? logRes : []);
+      setAppointments(apts);
+      setAllVaccines(vacs);
+      setClinics(cls.slice(0, 5));
+      setVaccinationHistory(logs.slice(0, 5));
+      if (apts.length > 0) {
+        setSelectedProgressVaccine(apts[0].vaccineType);
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard data', err);
+    }
   };
 
-  // Sample upcoming appointments
-  const upcomingAppointments = [
-    {
-      id: 1,
-      vaccine: 'COVID-19 Dose 2',
-      date: '2026-04-15',
-      time: '10:30 AM',
-      clinic: 'City Health Clinic',
-      location: '123 Main St, Downtown',
+  // Compute progress when vaccine selection changes
+  useEffect(() => {
+    if (!selectedProgressVaccine || appointments.length === 0) {
+      setProgressData(null);
+      return;
+    }
+    const apt = appointments.find(a => a.vaccineType === selectedProgressVaccine);
+    const vaccine = allVaccines.find(v => v.name === selectedProgressVaccine);
+    if (apt && vaccine) {
+      const current = apt.currentDose || 0;
+      const total = vaccine.totalDoses || 1;
+      setProgressData({ current, total, completed: current >= total });
+    } else {
+      setProgressData(null);
+    }
+  }, [selectedProgressVaccine, appointments, allVaccines]);
+
+  // Unique vaccine names from appointments for the dropdown
+  const patientVaccineNames = [...new Set(appointments.map(a => a.vaccineType))];
+
+  // Sample data kept for non-progress sections
+  const vaccinationStatus = {
+    completed: appointments.filter(a => {
+      const v = allVaccines.find(v2 => v2.name === a.vaccineType);
+      return v && (a.currentDose || 0) >= v.totalDoses;
+    }).length,
+    upcoming: appointments.filter(a => {
+      const v = allVaccines.find(v2 => v2.name === a.vaccineType);
+      return v && (a.currentDose || 0) < v.totalDoses;
+    }).length,
+    missed: 0,
+    total: appointments.length
+  };
+
+  const upcomingAppointments = appointments
+    .filter(a => new Date(a.appointmentDate) >= new Date(new Date().setHours(0,0,0,0)))
+    .map(a => ({
+      id: a._id,
+      vaccine: a.vaccineType,
+      date: a.appointmentDate,
+      time: a.appointmentTime,
+      clinic: a.clinicId?.clinicName || 'Unknown',
+      location: a.clinicId?.address || '',
       status: 'confirmed'
-    }
-  ];
+    }));
 
-  // Sample alerts
-  const alerts = [
-    {
-      id: 1,
-      type: 'warning',
-      message: 'HPV Dose 2 due in 3 days',
-      icon: AlertCircle
-    },
-    {
-      id: 2,
-      type: 'info',
-      message: 'New vaccination campaign available: Flu Shot 2026',
-      icon: Bell
-    }
-  ];
+  const alerts = [];
 
-  // Sample nearby clinics
-  const nearbyClinics = [
-    {
-      id: 1,
-      name: 'City Health Clinic',
-      distance: '0.5 km',
-      rating: 4.8,
-      address: '123 Main St',
-      openUntil: '8:00 PM'
-    },
-    {
-      id: 2,
-      name: 'Community Vaccination Center',
-      distance: '1.2 km',
-      rating: 4.5,
-      address: '456 Oak Ave',
-      openUntil: '6:00 PM'
-    }
-  ];
+  const progressPercentage = vaccinationStatus.total > 0
+    ? (vaccinationStatus.completed / vaccinationStatus.total) * 100
+    : 0;
 
-  // Sample vaccination history
-  const vaccinationHistory = [
-    { vaccine: 'COVID-19', dose: 'Dose 1', date: '2026-01-10', status: 'completed', location: 'City Health Clinic', certificate: true }
-  ];
-
-  // Calculate progress percentage
-  const progressPercentage = (vaccinationStatus.completed / vaccinationStatus.total) * 100;
-
-  // Health streak
   const healthStreak = 15;
 
   return (
@@ -190,7 +212,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Vaccination Status Progress - Enhanced */}
+          {/* Vaccination Progress – Real Data with Vaccine Dropdown */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 hover:shadow-xl transition-all">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -198,55 +220,76 @@ const Dashboard = () => {
                   <Syringe className="w-6 h-6 text-teal-600" />
                   💉 Vaccination Progress
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">Your journey to full protection</p>
+                <p className="text-sm text-gray-500 mt-1">Track your dose completion</p>
               </div>
               <Activity className="w-5 h-5 text-teal-600" />
             </div>
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Overall Progress</span>
-                <span className="font-semibold text-teal-600">{Math.round(progressPercentage)}% Complete</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-teal-500 to-cyan-500 h-4 rounded-full transition-all duration-500 relative"
-                  style={{ width: `${progressPercentage}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {vaccinationStatus.vaccines.map((vaccine, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-xl p-4 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 transition-all">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-gray-800">{vaccine.name}</span>
-                    <span className="text-sm text-teal-600 font-medium">
-                      {vaccine.doses.filter(d => d.status === 'completed').length}/{vaccine.doses.length} Doses
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    {vaccine.doses.map((dose, doseIdx) => (
-                      <div key={doseIdx} className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full">
-                        {dose.status === 'completed' ? (
-                          <CheckCircle className="w-4 h-4 text-teal-500" />
-                        ) : dose.status === 'upcoming' ? (
-                          <Clock className="w-4 h-4 text-amber-500" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-rose-500" />
-                        )}
-                        <span className="font-medium">Dose {dose.dose}</span>
-                        {dose.status === 'upcoming' && (
-                          <span className="text-xs text-gray-500">
-                            Due in {Math.ceil((new Date(dose.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} days
-                          </span>
-                        )}
-                      </div>
+
+            {patientVaccineNames.length > 0 ? (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Select Vaccine</label>
+                  <select
+                    value={selectedProgressVaccine}
+                    onChange={(e) => setSelectedProgressVaccine(e.target.value)}
+                    className="w-full md:w-1/2 border-2 border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  >
+                    {patientVaccineNames.map(name => (
+                      <option key={name} value={name}>{name}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-              ))}
-            </div>
+
+                {progressData ? (
+                  <div className="border border-gray-100 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-semibold text-gray-800 text-lg">{selectedProgressVaccine}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        progressData.completed
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {progressData.completed ? 'Completed' : 'In Progress'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Dose {progressData.current} of {progressData.total}</span>
+                      <span className="font-semibold text-teal-600">
+                        {Math.round((progressData.current / progressData.total) * 100)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+                      <div
+                        className={`h-4 rounded-full transition-all duration-700 ${
+                          progressData.completed
+                            ? 'bg-gradient-to-r from-green-400 to-green-500'
+                            : 'bg-gradient-to-r from-teal-500 to-cyan-500'
+                        }`}
+                        style={{ width: `${(progressData.current / progressData.total) * 100}%` }}
+                      />
+                    </div>
+                    <div className="flex gap-3 mt-3">
+                      {Array.from({ length: progressData.total }, (_, i) => (
+                        <div key={i} className="flex items-center gap-1 text-sm">
+                          {i < progressData.current ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-gray-300" />
+                          )}
+                          <span className={i < progressData.current ? 'text-green-700' : 'text-gray-400'}>
+                            Dose {i + 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No progress data available for this vaccine.</p>
+                )}
+              </>
+            ) : (
+              <p className="text-gray-500 text-center py-6">No vaccine appointments found. Book an appointment to start tracking.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -336,41 +379,39 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Nearby Clinics - Enhanced */}
+            {/* Nearby Clinics - Real Data */}
             <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <MapPin className="w-6 h-6 text-teal-600" />
-                    🏥 Nearby Clinics
+                    🏥 Clinics
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">Vaccination centers near you</p>
+                  <p className="text-sm text-gray-500 mt-1">Vaccination centers available</p>
                 </div>
                 <Link to="/patient/clinics" className="text-teal-600 hover:text-teal-700 text-sm font-medium flex items-center gap-1 group">
-                  Find Clinics <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                  View All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                 </Link>
               </div>
               <div className="space-y-3">
-                {nearbyClinics.map((clinic) => (
-                  <div key={clinic.id} className="flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 rounded-xl transition-all cursor-pointer">
+                {clinics.length > 0 ? clinics.map((clinic) => (
+                  <div key={clinic._id} className="flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 rounded-xl transition-all cursor-pointer">
                     <div>
-                      <h3 className="font-semibold text-gray-800">{clinic.name}</h3>
-                      <p className="text-sm text-gray-500">{clinic.address}</p>
+                      <h3 className="font-semibold text-gray-800">{clinic.clinicName}</h3>
+                      <p className="text-sm text-gray-500">{clinic.address}, {clinic.city}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm text-gray-600">{clinic.rating}</span>
-                        </div>
+                        <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">{clinic.clinicType}</span>
                         <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-500">{clinic.distance} away</span>
-                        <span className="text-xs text-teal-600">• Open until {clinic.openUntil}</span>
+                        <span className="text-xs text-teal-600">Open {clinic.openTime} – {clinic.closeTime}</span>
                       </div>
                     </div>
                     <div className="bg-teal-100 rounded-full p-2">
                       <MapPin className="w-5 h-5 text-teal-600" />
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-gray-500 text-center py-6">No clinics available</p>
+                )}
               </div>
             </div>
 
@@ -381,10 +422,10 @@ const Dashboard = () => {
                 <span className="text-xs bg-white px-2 py-1 rounded-full text-teal-600">Fast access</span>
               </h2>
               <div className="grid grid-cols-2 gap-4">
-                <Link to="/patient/appointments" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
+                <Link to="/patient/my-appointments" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
                   <Calendar className="w-10 h-10 text-teal-600 mx-auto mb-2 group-hover:scale-110 transition" />
-                  <p className="text-sm font-semibold text-gray-700">Book Appointment</p>
-                  <p className="text-xs text-gray-400 mt-1">Schedule your next dose</p>
+                  <p className="text-sm font-semibold text-gray-700">My Appointments</p>
+                  <p className="text-xs text-gray-400 mt-1">View your bookings</p>
                 </Link>
 
                 <Link to="/patient/immunization-logs" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
@@ -393,10 +434,10 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-400 mt-1">View full vaccination history</p>
                 </Link>
 
-                <Link to="/patient/feedback" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
+                <Link to="/patient/about" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
                   <Star className="w-10 h-10 text-amber-500 mx-auto mb-2 group-hover:scale-110 transition" />
-                  <p className="text-sm font-semibold text-gray-700">Give Feedback</p>
-                  <p className="text-xs text-gray-400 mt-1">Share your experience</p>
+                  <p className="text-sm font-semibold text-gray-700">About Us</p>
+                  <p className="text-xs text-gray-400 mt-1">Learn about UniVax</p>
                 </Link>
 
                 <Link to="/patient/clinics" className="bg-white hover:shadow-xl transition-all rounded-xl p-4 text-center group border border-gray-100">
@@ -433,22 +474,22 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {vaccinationHistory.map((record, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 transition-all">
-                      <td className="py-3 px-4 text-gray-800 font-medium">{record.vaccine}</td>
-                      <td className="py-3 px-4 text-gray-600">{record.dose}</td>
-                      <td className="py-3 px-4 text-gray-600">{new Date(record.date).toLocaleDateString()}</td>
+                  {vaccinationHistory.map((log, idx) => (
+                    <tr key={log._id || idx} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 transition-all">
+                      <td className="py-3 px-4 text-gray-800 font-medium">{log.vaccineId?.name || log.brand}</td>
+                      <td className="py-3 px-4 text-gray-600">Dose {log.doseNumber}</td>
+                      <td className="py-3 px-4 text-gray-600">{new Date(log.dateAdministered).toLocaleDateString()}</td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium">
                           <CheckCircle className="w-3 h-3" />
-                          {record.status}
+                          Administered
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{record.location}</td>
+                      <td className="py-3 px-4 text-gray-600">{log.clinic}</td>
                       <td className="py-3 px-4">
-                        <button className="text-teal-600 hover:text-teal-700 text-sm font-medium flex items-center gap-1">
-                          Download <ArrowRight className="w-3 h-3" />
-                        </button>
+                        <Link to="/patient/immunization-logs" className="text-teal-600 hover:text-teal-700 text-sm font-medium flex items-center gap-1">
+                          View <ArrowRight className="w-3 h-3" />
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -456,7 +497,7 @@ const Dashboard = () => {
               </table>
             </div>
             {vaccinationHistory.length === 0 && (
-              <p className="text-center text-gray-500 py-8">No vaccination history available</p>
+              <p className="text-center text-gray-500 py-8">No immunization logs found</p>
             )}
           </div>
         </div>

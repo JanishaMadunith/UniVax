@@ -4,7 +4,6 @@ import { PatientProvider } from './contexts/PatientContext';
 import SignUp from './components/Auth/Signup';
 import Login from './components/Auth/Login';
 import Landing from './components/Auth/Landing';
-import PatientAppointments from './components/patient/Appointments';
 import PatientDashboard from './components/patient/Dashboard';
 import PatientClinics from './components/patient/Clinics';
 import PatientAbout from './components/patient/About';
@@ -22,6 +21,8 @@ import AdminVaccines from './components/admin/AdminVaccines';
 import AdminDoses from './components/admin/AdminDoses';
 import AdminLogs from './components/admin/AdminLogs';
 import PatientImmunizationLogs from './components/patient/PatientImmunizationLogs';
+import PatientAppointments from './components/patient/Appointments';
+import MyAppointments from './components/patient/MyAppointments';
 import DoctorCreateLog from './components/doctor/DoctorCreateLog';
 import DoctorLogs from './components/doctor/DoctorLogs';
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient/clinics" element={<PatientClinics />} />
         <Route path="/patient/appointments" element={<PatientAppointments />} />
+        <Route path="/patient/my-appointments" element={<MyAppointments />} />
         <Route path="/patient/about" element={<PatientAbout />} />
 
         {/* Doctor Routes */}

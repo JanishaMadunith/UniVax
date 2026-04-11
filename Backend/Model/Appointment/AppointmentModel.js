@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const appointmentSchema = new Schema({
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ClinicModel',
+        required: true
+    },
     fullName: {
         type: String,
         required: true,
@@ -23,10 +28,6 @@ const appointmentSchema = new Schema({
         required: true,
         trim: true
     },
-    doseNumber: {
-        type: Number,
-        required: true
-    },
     ageGroup: {
         type: String,
         required: true
@@ -38,6 +39,10 @@ const appointmentSchema = new Schema({
     appointmentTime: {
         type: String,
         required: true
+    },
+    currentDose: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

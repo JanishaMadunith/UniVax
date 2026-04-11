@@ -22,19 +22,12 @@ const createClinic = async (clinicData) => {
 // Get All Clinics Service
 const getAllClinics = async () => {
     try {
-        const clinics = await Clinic.find();
-
-        if (!clinics || clinics.length === 0) {
-            throw {
-                status: 404,
-                message: "No clinics found"
-            };
-        }
+        const clinics = await Clinic.find().populate('availableVaccines.vaccineId', 'name genericName');
 
         return {
             success: true,
             count: clinics.length,
-            clinics
+            clinics: clinics || []
         };
     } catch (error) {
         if (error.status) {
@@ -51,7 +44,7 @@ const getAllClinics = async () => {
 // Get Clinic by ID Service
 const getClinicById = async (clinicId) => {
     try {
-        const clinic = await Clinic.findById(clinicId);
+        const clinic = await Clinic.findById(clinicId).populate('availableVaccines.vaccineId', 'name genericName');
 
         if (!clinic) {
             throw {

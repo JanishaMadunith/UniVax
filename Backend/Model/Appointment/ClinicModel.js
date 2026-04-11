@@ -53,7 +53,17 @@ const clinicSchema = new Schema({
     closeTime: {
         type: String,
         required: true   
-    }
+    },
+    availableVaccines: [{
+        vaccineId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'VaccineProduct'
+        },
+        quantity: {
+            type: Number,
+            default: 0
+        }
+    }]
 }, {
     timestamps: true
 });
