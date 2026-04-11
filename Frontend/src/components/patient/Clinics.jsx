@@ -408,7 +408,7 @@ const Clinics = () => {
                             state={{ clinicId: clinic._id, clinicName: clinic.clinicName }}
                             className="flex-1 text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-1"
                           >
-                            Book <ChevronRight className="w-3 h-3" />
+                            Book Appointment<ChevronRight className="w-3 h-3" />
                           </Link>
                         </div>
                       </div>

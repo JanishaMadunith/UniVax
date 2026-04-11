@@ -10,9 +10,11 @@ const AdminUsers = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const roles = ['All', 'Patient', 'Doctor', 'Admin', 'Official'];
   const statuses = ['Active', 'Suspended', 'Pending'];
+  const itemsPerPage = 10;
 
   // Fetch users on component mount
   useEffect(() => {
@@ -80,6 +82,19 @@ const AdminUsers = () => {
     ? users 
     : users.filter(user => user.role === selectedRole);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to page 1 when role filter changes
+  const handleRoleFilter = (role) => {
+    setSelectedRole(role);
+    setCurrentPage(1);
+  };
+
   const getRoleBadgeColor = (role) => {
     switch(role) {
       case 'Admin': return 'bg-red-100 text-red-800';
@@ -123,7 +138,7 @@ const AdminUsers = () => {
           {roles.map(role => (
             <button
               key={role}
-              onClick={() => setSelectedRole(role)}
+              onClick={() => handleRoleFilter(role)}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 selectedRole === role
                   ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
@@ -164,7 +179,7 @@ const AdminUsers = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map(user => (
+                  {paginatedUsers.map(user => (
                     <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
@@ -243,6 +258,43 @@ const AdminUsers = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* Pagination Controls */}
+            <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing {filteredUsers.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <div className="flex gap-1 items-center">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
