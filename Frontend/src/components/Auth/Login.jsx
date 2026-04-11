@@ -189,30 +189,7 @@ const Login = () => {
             <p className="text-sm text-gray-500 mt-1">Login to access your vaccination dashboard</p>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-6 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl">
-            <div className="text-center">
-              <div className="flex justify-center mb-1">
-                <Heart className="w-4 h-4 text-rose-500" />
-              </div>
-              <p className="text-xs text-gray-600">50K+</p>
-              <p className="text-xs text-gray-400">Users</p>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-1">
-                <Activity className="w-4 h-4 text-green-500" />
-              </div>
-              <p className="text-xs text-gray-600">98%</p>
-              <p className="text-xs text-gray-400">Satisfaction</p>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-1">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-              </div>
-              <p className="text-xs text-gray-600">24/7</p>
-              <p className="text-xs text-gray-400">Support</p>
-            </div>
-          </div>
+       
 
           {/* INLINE ERROR */}
           {errors.submit && (
