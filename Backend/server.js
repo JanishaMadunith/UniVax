@@ -31,6 +31,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Root route
+app.get("/", (req, res) => {
+  res.status(200).json({ 
+    message: "UniVax Backend API", 
+    version: "1.0.0",
+    status: "running"
+  });
+});
+
 // Routes
 app.use("/api/V1/users", userRoutes);
 app.use("/api/V1/vaccines", vaccineRoutes);
