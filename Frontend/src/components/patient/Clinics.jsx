@@ -404,15 +404,9 @@ const Clinics = () => {
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <Link
-                            to={`/patient/clinics/${clinic._id}`}
-                            className="flex-1 text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm"
-                          >
-                            View Details
-                          </Link>
-                          <Link
                             to="/patient/appointments"
                             state={{ clinicId: clinic._id, clinicName: clinic.clinicName }}
-                            className="px-4 py-2 border border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-all font-medium text-sm flex items-center gap-1"
+                            className="flex-1 text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-1"
                           >
                             Book <ChevronRight className="w-3 h-3" />
                           </Link>
