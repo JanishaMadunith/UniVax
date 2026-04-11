@@ -4,6 +4,7 @@ import { Calendar, Shield, Mail, Lock, User, Phone, AlertCircle, CheckCircle, Ma
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
+import { API_URL } from '../../../api';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -143,7 +144,7 @@ const SignUp = () => {
       
       try {
         // API call to your backend
-        const response = await fetch('http://localhost:5001/api/V1/users/register', {
+        const response = await fetch(`${API_URL}/api/V1/users/register`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',

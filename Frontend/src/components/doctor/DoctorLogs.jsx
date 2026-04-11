@@ -47,7 +47,7 @@ const DoctorLogs = () => {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://localhost:5001/api/V1/logs/${selectedLog._id}`, 
+      await axios.put(`${API_URL}/api/V1/logs/${selectedLog._id}`, 
         { notes: editNotes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
