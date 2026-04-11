@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut, User, FileText } from 'lucide-react';
 import { usePatient } from '../../contexts/PatientContext';
 
 const DoctorSidebar = () => {
-  const [userName, setUserName] = useState('Doctor');
   const { selectedPatient } = usePatient();
-
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-      setUserName(user.name || 'Doctor');
+  const userName = (() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      return user?.name || 'Doctor';
+    } catch {
+      return 'Doctor';
     }
-  }, []);
+  })();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -60,10 +60,18 @@ const DoctorSidebar = () => {
           {/* 🔥 YOUR IMMUNIZATION LOG LINK */}
           <Link 
             to="/doctor/create-log" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 bg-white/10"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 "
           >
             <FileText size={20} />
             Create New Log
+          </Link>
+
+          <Link 
+            to="/doctor/logs" 
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 "
+          >
+            <FileText size={20} />
+            Show Logs
           </Link>
 
           <Link 
