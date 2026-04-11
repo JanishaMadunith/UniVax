@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../../api';
 import DoctorSidebar from './DoctorSidebar';
 import axios from 'axios';
 
@@ -39,7 +40,7 @@ const DoctorAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5001/api/V1/appointments', authHeader());
+      const res = await axios.get(`${API_URL}/api/V1/appointments`, authHeader());
       setAppointments(res.data.appointments || []);
     } catch (err) {
       console.error('Error fetching appointments:', err);
@@ -50,7 +51,7 @@ const DoctorAppointments = () => {
 
   const fetchClinics = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/V1/clinics', authHeader());
+      const res = await axios.get(`${API_URL}/api/V1/clinics`, authHeader());
       setClinics(res.data.clinics || []);
     } catch (err) {
       console.error('Error fetching clinics:', err);
@@ -90,7 +91,7 @@ const DoctorAppointments = () => {
     e.preventDefault();
     try {
       await axios.put(
-        `http://localhost:5001/api/V1/appointments/${editingAppointment._id}`,
+        `${API_URL}/api/V1/appointments/${editingAppointment._id}`,
         formData,
         authHeader()
       );
@@ -105,7 +106,7 @@ const DoctorAppointments = () => {
   const handleDeleteConfirmed = async () => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/V1/appointments/${confirmDeleteId}`,
+        `${API_URL}/api/V1/appointments/${confirmDeleteId}`,
         authHeader()
       );
       setConfirmDeleteId(null);

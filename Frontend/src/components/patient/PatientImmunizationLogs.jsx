@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FileText, Calendar, Download, Eye } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { API_URL } from '../../../api';
 import TopNavbar from './TopNavbar';
 
 const PatientImmunizationLogs = () => {
@@ -18,7 +19,7 @@ const PatientImmunizationLogs = () => {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/V1/logs', {
+      const res = await axios.get(`${API_URL}/api/V1/logs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

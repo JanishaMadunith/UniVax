@@ -18,6 +18,7 @@ import {
 import TopNavbar from './TopNavbar';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../../api';
 
 const Clinics = () => {
   const [clinics, setClinics] = useState([]);
@@ -67,7 +68,7 @@ const Clinics = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5001/api/V1/clinics', {
+      const response = await fetch(`${API_URL}/api/V1/clinics`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Shield, AlertCircle, Eye, EyeOff, ArrowRight, Sparkles, Heart, Activity } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../../../api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/V1/users/login', {
+      const response = await fetch(`${API_URL}/api/V1/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

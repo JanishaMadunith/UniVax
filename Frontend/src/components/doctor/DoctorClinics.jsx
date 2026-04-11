@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../../api';
 import DoctorSidebar from './DoctorSidebar';
 
 const DoctorClinics = () => {
@@ -21,7 +22,7 @@ const DoctorClinics = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5001/api/V1/clinics', {
+      const response = await fetch(`${API_URL}/api/V1/clinics`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../../api';
 import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 
@@ -36,7 +37,7 @@ const AdminAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5001/api/V1/appointments', authHeader());
+      const res = await axios.get(`${API_URL}/api/V1/appointments`, authHeader());
       setAppointments(res.data.appointments || []);
     } catch (err) {
       console.error('Error fetching appointments:', err);
@@ -47,7 +48,7 @@ const AdminAppointments = () => {
 
   const fetchClinics = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/V1/clinics', authHeader());
+      const res = await axios.get(`${API_URL}/api/V1/clinics`, authHeader());
       setClinics(res.data.clinics || []);
     } catch (err) {
       console.error('Error fetching clinics:', err);
@@ -83,7 +84,7 @@ const AdminAppointments = () => {
     e.preventDefault();
     try {
       await axios.put(
-        `http://localhost:5001/api/V1/appointments/${editingAppointment._id}`,
+        `${API_URL}/api/V1/appointments/${editingAppointment._id}`,
         formData,
         authHeader()
       );
@@ -98,7 +99,7 @@ const AdminAppointments = () => {
   const handleDeleteConfirmed = async () => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/V1/appointments/${confirmDeleteId}`,
+        `${API_URL}/api/V1/appointments/${confirmDeleteId}`,
         authHeader()
       );
       setConfirmDeleteId(null);

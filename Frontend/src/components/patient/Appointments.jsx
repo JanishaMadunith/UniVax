@@ -5,6 +5,7 @@ import {
   Calendar as CalendarIcon, Filter, ChevronDown, Building2, Info
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../../api';
 import TopNavbar from './TopNavbar';
 import { useLocation } from 'react-router-dom';
 import {
@@ -82,7 +83,7 @@ const Appointments = () => {
   const fetchClinics = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/V1/clinics', {
+      const response = await fetch(`${API_URL}/api/V1/clinics`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       const data = await response.json();
@@ -103,7 +104,7 @@ const Appointments = () => {
       const token = localStorage.getItem('token');
       console.log('Token present:', !!token);
       
-      const response = await fetch(`http://localhost:5001/api/V1/appointments/user/${email}`, {
+      const response = await fetch(`${API_URL}/api/V1/appointments/user/${email}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -220,7 +221,7 @@ const Appointments = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5001/api/V1/appointments/create', {
+      const response = await fetch(`${API_URL}/api/V1/appointments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

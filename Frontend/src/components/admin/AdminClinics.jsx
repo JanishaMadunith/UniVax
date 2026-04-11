@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../../api';
 import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 
@@ -36,7 +37,7 @@ const AdminClinics = () => {
   const fetchVaccines = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5001/api/V1/vaccines', {
+      const response = await axios.get(`${API_URL}/api/V1/vaccines`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAllVaccines(response.data.data || []);
@@ -49,7 +50,7 @@ const AdminClinics = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5001/api/V1/clinics', {
+      const response = await axios.get(`${API_URL}/api/V1/clinics`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setClinics(response.data.clinics || []);
@@ -163,11 +164,11 @@ const AdminClinics = () => {
       const authHeader = { headers: { Authorization: `Bearer ${token}` } };
       if (editingClinic) {
         // Update clinic
-        await axios.put(`http://localhost:5001/api/V1/clinics/${editingClinic._id}`, formData, authHeader);
+        await axios.put(`${API_URL}/api/V1/clinics/${editingClinic._id}`, formData, authHeader);
         alert('Clinic updated successfully');
       } else {
         // Create new clinic
-        await axios.post('http://localhost:5001/api/V1/clinics/create', formData, authHeader);
+        await axios.post(`${API_URL}/api/V1/clinics/create`, formData, authHeader);
         alert('Clinic added successfully');
       }
       setShowModal(false);
@@ -184,7 +185,7 @@ const AdminClinics = () => {
     if (window.confirm('Are you sure you want to delete this clinic?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5001/api/V1/clinics/${clinicId}`, {
+        await axios.delete(`${API_URL}/api/V1/clinics/${clinicId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Clinic deleted successfully');

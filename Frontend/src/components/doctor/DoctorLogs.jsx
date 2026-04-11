@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
+import { API_URL } from '../../../api';
 import DoctorSidebar from '../doctor/DoctorSidebar';
 //import TopNavbar from '../TopNavbar';   // Optional - remove if you prefer sidebar only
 
@@ -16,7 +17,7 @@ const DoctorLogs = () => {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/V1/logs', {
+      const res = await axios.get(`${API_URL}/api/V1/logs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
