@@ -50,10 +50,7 @@ const DoctorClinics = () => {
       <DoctorSidebar />
       <div className="ml-64 px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Clinics</h1>
-          <button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
-            Add Clinic
-          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Clinics</h1>          
         </div>
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all">
           <table className="min-w-full divide-y divide-gray-200">
