@@ -7,6 +7,8 @@ const upload = require('../../middlewares/upload.middleware');
 // Public routes
 router.post("/register", UserController.registerUser);
 router.post("/login", UserController.loginUser);
+router.post("/forgot-password", UserController.forgotPassword);
+router.post("/reset-password", UserController.resetPassword);
 
 // Protected route: Update own profile (using JWT - no ID needed in URL)
 router.put("/profile", authMiddleware(['Patient', 'Doctor', 'Admin', 'Official']), UserController.updateOwnProfile);

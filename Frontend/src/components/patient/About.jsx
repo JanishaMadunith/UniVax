@@ -355,7 +355,7 @@ const About = () => {
               <p className="text-gray-600 mb-6">Book your appointment today and take the first step towards better health</p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  to="/patient/appointments"
+                  to="/patient/clinics"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
                 >
                   Book Appointment <ArrowRight className="w-4 h-4" />

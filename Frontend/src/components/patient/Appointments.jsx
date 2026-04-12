@@ -7,7 +7,7 @@ import {
 import { toast } from 'react-toastify';
 import { API_URL } from '../../../api';
 import TopNavbar from './TopNavbar';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   isDateAvailable,
   getNextAvailableDate,
@@ -18,7 +18,15 @@ import { validateAppointmentForm } from '../../utils/appointmentValidation';
 
 const Appointments = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { clinicId: passedClinicId, clinicName: passedClinicName } = location.state || {};
+
+  // Guard: must arrive via clinic selection
+  useEffect(() => {
+    if (!passedClinicId) {
+      navigate('/patient/clinics', { replace: true });
+    }
+  }, [passedClinicId, navigate]);
 
   // Get logged-in user email (you can get this from auth context/localStorage)
   const [userEmail, setUserEmail] = useState('');

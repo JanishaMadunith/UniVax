@@ -1,5 +1,6 @@
 const User = require("../../Model/users/UserModel");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 const cloudinary = require('../../config/cloudinary');
 
 class UserService {
@@ -262,6 +263,88 @@ class UserService {
       success: true,
       message: "User deleted successfully"
     };
+  }
+
+  // Send password reset email via Brevo
+  async forgotPassword(email) {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Return success anyway to prevent email enumeration
+      return { success: true, message: "If that email exists, a reset link has been sent." };
+    }
+
+    const resetToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://uni-vax.vercel.app'}/reset-password?token=${resetToken}`;
+
+    const apiKey = (process.env.BREVO_API_KEY || '').trim();
+    const senderEmail = (process.env.BREVO_SENDER_EMAIL || '').trim();
+    const senderName = (process.env.BREVO_SENDER_NAME || 'UniVax Team').trim();
+
+    const hasValidConfig = apiKey.length > 0 && senderEmail.length > 0 &&
+      !apiKey.toLowerCase().includes('replace_me');
+
+    if (hasValidConfig) {
+      try {
+        await axios.post(
+          'https://api.brevo.com/v3/smtp/email',
+          {
+            sender: { name: senderName, email: senderEmail },
+            to: [{ email: user.email }],
+            subject: 'UniVax - Password Reset Request',
+            htmlContent: `
+              <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+                <h2 style="color:#2563eb;">UniVax Password Reset</h2>
+                <p>Hi <strong>${user.name}</strong>,</p>
+                <p>We received a request to reset your password. Click the button below to set a new password. This link expires in <strong>15 minutes</strong>.</p>
+                <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:linear-gradient(to right,#2563eb,#06b6d4);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;margin:16px 0;">Reset Password</a>
+                <p style="color:#6b7280;font-size:13px;">If you didn't request a password reset, you can safely ignore this email. Your password won't change.</p>
+                <p style="color:#6b7280;font-size:13px;">Or copy this link: <a href="${resetUrl}">${resetUrl}</a></p>
+              </div>
+            `
+          },
+          { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
+        );
+        console.log('✓ Password reset email sent to', user.email);
+      } catch (emailError) {
+        const status = emailError?.response?.status;
+        if (status === 401) {
+          console.error('Brevo reset email failed (non-blocking): Unauthorized (401). Check BREVO_API_KEY in backend .env');
+        } else {
+          console.error('Brevo reset email failed (non-blocking):', emailError.message);
+        }
+      }
+    } else {
+      console.warn('Brevo reset email skipped: BREVO_API_KEY or BREVO_SENDER_EMAIL missing in backend .env');
+      console.log('Reset URL (dev):', resetUrl);
+    }
+
+    return { success: true, message: "If that email exists, a reset link has been sent." };
+  }
+
+  // Reset password using the token from the email link
+  async resetPassword(token, newPassword) {
+    if (!token) throw new Error("Reset token is required");
+    if (!newPassword || newPassword.length < 6) throw new Error("Password must be at least 6 characters");
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      throw new Error("Reset link is invalid or has expired. Please request a new one.");
+    }
+
+    const user = await User.findById(payload.id);
+    if (!user) throw new Error("User not found");
+
+    user.password = newPassword; // pre-save hook in UserModel will hash it
+    await user.save();
+
+    return { success: true, message: "Password reset successfully. You can now log in." };
   }
 }
 

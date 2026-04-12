@@ -149,3 +149,28 @@ exports.updateUser = updateUser;
 exports.updateOwnProfile = updateOwnProfile;
 exports.uploadProfilePic = uploadProfilePic;
 exports.deleteUser = deleteUser;
+
+// Forgot Password
+const forgotPassword = async (req, res) => {
+    try {
+        const result = await UserService.forgotPassword(req.body.email);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Forgot password error:", error);
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+// Reset Password
+const resetPassword = async (req, res) => {
+    try {
+        const result = await UserService.resetPassword(req.body.token, req.body.newPassword);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Reset password error:", error);
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+exports.forgotPassword = forgotPassword;
+exports.resetPassword = resetPassword;

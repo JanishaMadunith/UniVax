@@ -281,6 +281,11 @@ const Login = () => {
                   {errors.password}
                 </p>
               )}
+              <div className="flex justify-end mt-1">
+                <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Options Row */}

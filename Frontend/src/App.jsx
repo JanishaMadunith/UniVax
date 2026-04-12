@@ -4,6 +4,8 @@ import { PatientProvider } from './contexts/PatientContext';
 import SignUp from './components/Auth/Signup';
 import Login from './components/Auth/Login';
 import Landing from './components/Auth/Landing';
+import ForgotPassword from './components/Auth/ForgotPassword';
+import ResetPassword from './components/Auth/ResetPassword';
 import PatientDashboard from './components/patient/Dashboard';
 import PatientClinics from './components/patient/Clinics';
 import PatientAbout from './components/patient/About';
@@ -38,6 +40,8 @@ function App() {
         {/* Auth Routes */}
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Patient Routes */}
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
