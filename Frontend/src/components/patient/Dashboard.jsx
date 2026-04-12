@@ -116,6 +116,119 @@ const Dashboard = () => {
 
   const alerts = [];
 
+  // --- Compute real alerts from existing data ---
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 1. Upcoming appointments within 3 days
+  appointments.forEach(a => {
+    const aptDate = new Date(a.appointmentDate);
+    aptDate.setHours(0, 0, 0, 0);
+    const daysUntil = Math.ceil((aptDate - today) / (1000 * 60 * 60 * 24));
+    if (daysUntil >= 0 && daysUntil <= 3) {
+      alerts.push({
+        id: `apt-soon-${a._id}`,
+        icon: Calendar,
+        type: 'warning',
+        message: daysUntil === 0
+          ? `Your ${a.vaccineType} appointment is TODAY at ${a.appointmentTime}`
+          : `Your ${a.vaccineType} appointment is in ${daysUntil} day${daysUntil > 1 ? 's' : ''} (${new Date(a.appointmentDate).toLocaleDateString()})`
+      });
+    }
+  });
+
+  // 2. Overdue next dose (from immunization logs)
+  vaccinationHistory.forEach(log => {
+    if (log.nextDueDate) {
+      const dueDate = new Date(log.nextDueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+      if (daysOverdue > 0) {
+        const vaccineName = log.vaccineId?.name || log.brand || 'Vaccine';
+        alerts.push({
+          id: `overdue-${log._id}`,
+          icon: AlertCircle,
+          type: 'warning',
+          message: `Your ${vaccineName} Dose ${(log.doseNumber || 0) + 1} is ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} overdue. Please schedule it soon.`
+        });
+      }
+    }
+  });
+
+  // 3. Upcoming next dose within 7 days (from immunization logs)
+  vaccinationHistory.forEach(log => {
+    if (log.nextDueDate) {
+      const dueDate = new Date(log.nextDueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+      if (daysUntil >= 0 && daysUntil <= 7) {
+        const vaccineName = log.vaccineId?.name || log.brand || 'Vaccine';
+        alerts.push({
+          id: `due-soon-${log._id}`,
+          icon: Clock,
+          type: 'info',
+          message: daysUntil === 0
+            ? `Your ${vaccineName} Dose ${(log.doseNumber || 0) + 1} is due today!`
+            : `Your ${vaccineName} Dose ${(log.doseNumber || 0) + 1} is due in ${daysUntil} day${daysUntil > 1 ? 's' : ''}`
+        });
+      }
+    }
+  });
+
+  // 4. Incomplete vaccinations (has appointment but doses remaining)
+  appointments.forEach(a => {
+    const vaccine = allVaccines.find(v => v.name === a.vaccineType);
+    if (vaccine) {
+      const current = a.currentDose || 0;
+      const total = vaccine.totalDoses || 1;
+      if (current > 0 && current < total) {
+        alerts.push({
+          id: `incomplete-${a._id}`,
+          icon: Syringe,
+          type: 'info',
+          message: `${a.vaccineType}: ${current} of ${total} dose${total > 1 ? 's' : ''} completed. ${total - current} remaining.`
+        });
+      }
+    }
+  });
+
+  // 5. Fully completed vaccines
+  appointments.forEach(a => {
+    const vaccine = allVaccines.find(v => v.name === a.vaccineType);
+    if (vaccine) {
+      const current = a.currentDose || 0;
+      const total = vaccine.totalDoses || 1;
+      if (current >= total && total > 0) {
+        alerts.push({
+          id: `complete-${a._id}`,
+          icon: CheckCircle,
+          type: 'success',
+          message: `${a.vaccineType} vaccination fully completed! All ${total} dose${total > 1 ? 's' : ''} done.`
+        });
+      }
+    }
+  });
+
+  // 6. No appointments at all
+  if (appointments.length === 0) {
+    alerts.push({
+      id: 'no-appointments',
+      icon: Calendar,
+      type: 'info',
+      message: 'You have no appointments yet. Book one to start your vaccination journey!'
+    });
+  }
+
+  // Sort alerts: warnings first (action-required), then success, then info
+  const sortedAlerts = alerts.sort((a, b) => {
+    const priority = { warning: 0, success: 2, info: 1 };
+    return priority[a.type] - priority[b.type];
+  });
+
+  // Show max 4 in dashboard, rest accessible via badge
+  const visibleAlerts = sortedAlerts.slice(0, 4);
+  const hiddenAlertsCount = sortedAlerts.length - visibleAlerts.length;
+
   const progressPercentage = vaccinationStatus.total > 0
     ? (vaccinationStatus.completed / vaccinationStatus.total) * 100
     : 0;
@@ -351,29 +464,59 @@ const Dashboard = () => {
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">Important updates for you</p>
                 </div>
-                <TrendingUp className="w-5 h-5 text-teal-600" />
+                {sortedAlerts.length > 0 && (
+                  <span className="inline-flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full">
+                    {sortedAlerts.length}
+                  </span>
+                )}
               </div>
-              <div className="space-y-3">
-                {alerts.map((alert) => {
+              <div className="max-h-96 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                {visibleAlerts.length > 0 ? visibleAlerts.map((alert) => {
                   const Icon = alert.icon;
                   return (
                     <div key={alert.id} className={`p-4 rounded-xl ${
-                      alert.type === 'warning' ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500' : 'bg-gradient-to-r from-teal-50 to-cyan-50 border-l-4 border-teal-500'
+                      alert.type === 'warning'
+                        ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500'
+                        : alert.type === 'success'
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500'
+                        : 'bg-gradient-to-r from-teal-50 to-cyan-50 border-l-4 border-teal-500'
                     } hover:shadow-md transition-all`}>
                       <div className="flex items-start gap-3">
-                        <Icon className={`w-5 h-5 ${alert.type === 'warning' ? 'text-amber-600' : 'text-teal-600'} mt-0.5`} />
-                        <div>
-                          <p className={`text-sm font-medium ${alert.type === 'warning' ? 'text-amber-800' : 'text-teal-800'}`}>
+                        <Icon className={`w-5 h-5 ${
+                          alert.type === 'warning' ? 'text-amber-600'
+                          : alert.type === 'success' ? 'text-green-600'
+                          : 'text-teal-600'
+                        } mt-0.5 flex-shrink-0`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${
+                            alert.type === 'warning' ? 'text-amber-800'
+                            : alert.type === 'success' ? 'text-green-800'
+                            : 'text-teal-800'
+                          }`}>
                             {alert.message}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {alert.type === 'warning' ? 'Action required soon' : 'Stay informed'}
+                            {alert.type === 'warning' ? 'Action required soon' : alert.type === 'success' ? 'Well done!' : 'Stay informed'}
                           </p>
                         </div>
                       </div>
                     </div>
                   );
-                })}
+                }) : (
+                  <p className="text-gray-500 text-center py-8">No alerts at this time</p>
+                )}
+                {hiddenAlertsCount > 0 && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-xl hover:shadow-md transition-all">
+                    <Link
+                      to="/patient/dashboard#all-alerts"
+                      onClick={() => document.querySelector('.alerts-container')?.classList.remove('max-h-96')}
+                      className="flex items-center justify-between text-sm font-medium text-blue-700 hover:text-blue-900 group"
+                    >
+                      <span>📊 View {hiddenAlertsCount} more alert{hiddenAlertsCount > 1 ? 's' : ''}</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
