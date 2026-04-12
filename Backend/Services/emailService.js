@@ -82,30 +82,29 @@ const sendAppointmentConfirmation = async (appointment, clinicName) => {
     });
 };
 
-// Email sent to doctor after a vaccine (immunization log) is added
-const sendVaccinationRecordNotification = async (log, doctorEmail) => {
-    const patientName = log.userId?.name || 'Patient';
+// Email sent to patient after a vaccine (immunization log) is added
+const sendVaccinationRecordNotification = async (log, patientEmail, patientName) => {
     const dateStr = new Date(log.dateAdministered).toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
     return sendEmail({
-        to: doctorEmail,
-        subject: `Vaccination Record Added - ${log.brand} Dose ${log.doseNumber}`,
+        to: patientEmail,
+        subject: `Vaccination Complete - ${log.brand}`,
         htmlContent: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2563eb;">Vaccination Record Confirmation</h2>
-                <p>Dear Doctor,</p>
-                <p>A new vaccination record has been successfully added to the system.</p>
+                <h2 style="color: #2563eb;">Vaccination Confirmation</h2>
+                <p>Dear ${patientName || 'Patient'},</p>
+                <p>Your vaccination record has been successfully added to your UniVax profile.</p>
                 <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Patient</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${patientName}</td></tr>
                     <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Vaccine</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.brand}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Batch Number</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.batchNumber}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Date</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${dateStr}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Dose</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.doseNumber}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Dose Number</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.doseNumber}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Date Administered</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${dateStr}</td></tr>
                     <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Clinic</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.clinic}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Batch Number</strong></td><td style="padding: 8px; border: 1px solid #e5e7eb;">${log.batchNumber}</td></tr>
                 </table>
                 ${log.nextDueDate ? `<p><strong>Next dose due:</strong> ${new Date(log.nextDueDate).toLocaleDateString()}</p>` : ''}
+                <p>Please keep this record for your health records. You can view your complete vaccination history anytime in your UniVax profile.</p>
                 <p style="color: #6b7280; font-size: 14px;">This is an automated notification from UniVax.</p>
             </div>
         `,

@@ -1,15 +1,19 @@
 const immunizationLogService = require("../../Services/ImmunizationLogs/immunizationLog.service.js");
 const { sendVaccinationRecordNotification } = require("../../Services/emailService");
+const User = require("../../Model/users/UserModel");
 
 const createLog = async (req, res) => {
   try {
     const log = await immunizationLogService.createLog(req.body);
 
-    // Send email notification to the doctor who added the record (non-blocking)
-    if (req.user && req.user.email) {
-      sendVaccinationRecordNotification(log, req.user.email).catch(err =>
-        console.error('Vaccination email error:', err.message)
-      );
+    // Send email notification to the patient (non-blocking)
+    if (log && log.userId) {
+      const patient = await User.findById(log.userId).select('email name');
+      if (patient && patient.email) {
+        sendVaccinationRecordNotification(log, patient.email, patient.name).catch(err =>
+          console.error('Vaccination email error:', err.message)
+        );
+      }
     }
 
     res.status(201).json(log);
