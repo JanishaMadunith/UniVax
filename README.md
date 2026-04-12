@@ -127,6 +127,18 @@ Error Handling: Standard codes (400 Bad Request, 401 Unauthorized, 404 Not Found
 
 Environment Variables Used: MONGO_URI, JWT_SECRET, TWILIO_SID (backend); REACT_APP_API_URL (frontend).
 
+### Running test cases
+- Run all tests : npm test
+
+- Run all Unit Tests : npm test -- --testNamePattern="\.unit\.test"
+- Run all Integration Tests : npm test -- --testNamePattern="\.integration\.test"
+- Run all Performance Tests : npm test -- --testNamePattern="\.performance\.test"
+
+- Run All User tests : npm test -- users
+- Run All Appointment tests : npm test -- Appointment
+- Run All Vaccine Catalog tests : npm test -- vaccineCatalog 
+- Run All Immunization tests : npm test -- ImmunizationLogs
+
 ## Contributors
 - Group project for SE3040 - 2026.
 - SE 69 Y03.S02.
