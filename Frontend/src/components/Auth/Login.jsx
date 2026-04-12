@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Shield, AlertCircle, Eye, EyeOff, ArrowRight, Sparkles, Heart, Activity } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../api';
 
@@ -67,7 +66,6 @@ const Login = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.warning('Please fill all fields correctly!');
       return;
     }
 
@@ -92,7 +90,6 @@ const Login = () => {
         if (!formData.isPrivilegedLogin && (user.role === 'Doctor' || user.role === 'Admin')) {
           const message = 'Invalid login attempt. Please check your credentials and role selection.';
           setErrors({ submit: message });
-          toast.error(message);
           setIsSubmitting(false);
           return;
         }
@@ -101,7 +98,6 @@ const Login = () => {
         if (formData.isPrivilegedLogin && user.role === 'Patient') {
           const message = 'Invalid login attempt. Please check your credentials and role selection.';
           setErrors({ submit: message });
-          toast.error(message);
           setIsSubmitting(false);
           return;
         }
@@ -118,8 +114,6 @@ const Login = () => {
         } else {
           localStorage.removeItem('rememberedEmail');
         }
-
-        toast.success('Login successful!');
 
         // ROLE-BASED REDIRECTION
         switch (user.role) {
@@ -138,14 +132,12 @@ const Login = () => {
 
       } else {
         const message = data.message || 'Invalid email or password';
-        toast.error(message);
         setErrors({ submit: message });
       }
 
     } catch (error) {
       console.error(error);
       const message = 'Network error. Please try again.';
-      toast.error(message);
       setErrors({ submit: message });
     } finally {
       setIsSubmitting(false);

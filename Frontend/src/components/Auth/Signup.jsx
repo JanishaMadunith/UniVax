@@ -1,9 +1,7 @@
 // src/components/SignUp.jsx
 import React, { useState } from 'react';
 import { Calendar, Shield, Mail, Lock, User, Phone, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
-import 'react-toastify/dist/ReactToastify.css';
 import { API_URL } from '../../../api';
 
 const SignUp = () => {
@@ -155,14 +153,6 @@ const SignUp = () => {
         const data = await response.json();
         
         if (response.ok) {
-          toast.success('Account created successfully! Please check your email to verify your account.', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
           setSubmitSuccess(true);
           
           // Reset form after success
@@ -180,28 +170,15 @@ const SignUp = () => {
             setSubmitSuccess(false);
           }, 3000);
         } else {
-          toast.error(data.message || 'Failed to create account. Please try again.', {
-            position: "top-right",
-            autoClose: 5000,
-          });
           setErrors({ submit: data.message || 'Signup failed' });
         }
         
       } catch (error) {
         console.error('Signup error:', error);
-        toast.error('Network error. Please check your connection.', {
-          position: "top-right",
-          autoClose: 5000,
-        });
         setErrors({ submit: 'Failed to connect to server. Please try again.' });
       } finally {
         setIsSubmitting(false);
       }
-    } else {
-      toast.warning('Please fill all required fields correctly!', {
-        position: "top-center",
-        autoClose: 3000,
-      });
     }
   };
 
