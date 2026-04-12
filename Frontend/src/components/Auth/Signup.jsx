@@ -1,10 +1,11 @@
 // src/components/SignUp.jsx
 import React, { useState } from 'react';
 import { Calendar, Shield, Mail, Lock, User, Phone, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../api';
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // Basic authentication
     name: '',
@@ -129,6 +130,7 @@ const SignUp = () => {
         email: formData.email.toLowerCase(),
         phone: formData.phone,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
         role: 'Patient', // Default role - Admin will change if needed
         address: {
           city: formData.address.city,
@@ -153,22 +155,14 @@ const SignUp = () => {
         const data = await response.json();
         
         if (response.ok) {
-          setSubmitSuccess(true);
-          
-          // Reset form after success
-          setTimeout(() => {
-            setFormData({
-              name: '',
-              email: '',
-              phone: '',
-              password: '',
-              confirmPassword: '',
-              agreeToTerms: false,
-              rememberMe: false,
-              address: { city: '', district: '', province: '' }
-            });
-            setSubmitSuccess(false);
-          }, 3000);
+          const user = data.user;
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
+          if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+          navigate('/patient/dashboard');
         } else {
           setErrors({ submit: data.message || 'Signup failed' });
         }
