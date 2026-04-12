@@ -19,9 +19,9 @@ Group Members:
 
 - **Backend**: Node.js, Express.js, MongoDB (Mongoose), JWT for auth, Axios for third-party APIs, Joi for validation.
 - **Frontend**: React.js (Hooks, Context API/Redux), Tailwind CSS/Bootstrap, Axios for API calls.
-- **Deployment**: Backend on Render/Railway (Dockerized), Frontend on Vercel/Netlify.
+- **Deployment**: Backend on Render/Railway, Frontend on Vercel.
 - **Testing**: Jest/Supertest (unit/integration), Artillery.io (performance).
-- **Other**: Swagger/Postman for API docs, Docker & docker-compose for containerization.
+- **Other**: Swagger/Postman for API docs.
 
 ## Setup Instructions
 
@@ -29,13 +29,12 @@ Group Members:
 - Node.js (v18+)
 - MongoDB (local or Atlas)
 - Git
-- Docker (optional for microservices)
 
 ### Step-by-Step Guide
 1. **Install Dependencies**:
    - Backend: `cd backend && npm install`
 
-2. **Run Locally (Without Docker)**:
+2. **Run Locally**:
    - Start MongoDB (if local: `mongod`).
    - Backend: `cd backend && npm start` (runs on http://localhost:5001).
 
@@ -108,14 +107,23 @@ Error Handling: Standard codes (400 Bad Request, 401 Unauthorized, 404 Not Found
 ## Deployment
 
 ### Backend Deployment
-- Platform: Render (Dockerized for microservices).
+- Platform: Render.
 - Setup Steps:
   1. Create Render account.
   2. New Web Service > Connect GitHub repo.
-  3. Runtime: Docker (uses Dockerfile).
-  4. Add env vars: MONGO_URI, JWT_SECRET, etc. (no secrets exposed).
+  3. Add env vars: MONGO_URI, JWT_SECRET, etc. (no secrets exposed).
 - Live URL: https://vaccination-backend.onrender.com
 - Screenshots: [Deployment Success Screenshot] (add image link).
+
+### Frontend Deployment
+- Platform: Vercel.
+- Live URL: https://vercel.uni-vax.vercel.app
+- Setup Steps:
+  1. Create Vercel account.
+  2. Connect GitHub repo (Backend folder).
+  3. Configure build settings (Vite build configuration already in place).
+  4. Add environment variables: REACT_APP_API_URL (backend API URL).
+- Auto-deployment on every push to main branch.
 
 Environment Variables Used: MONGO_URI, JWT_SECRET, TWILIO_SID (backend); REACT_APP_API_URL (frontend).
 
