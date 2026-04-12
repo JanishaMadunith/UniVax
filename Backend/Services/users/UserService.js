@@ -5,9 +5,9 @@ const cloudinary = require('../../config/cloudinary');
 
 class UserService {
   // Generate JWT Token
-  generateToken(userId, role) {
+  generateToken(userId, role, email) {
     const token = jwt.sign(
-      { id: userId, role: role || 'Patient' },
+      { id: userId, role: role || 'Patient', email: email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -23,6 +23,9 @@ class UserService {
       throw new Error("All fields are required");
     }
 
+    if (password !== confirmPassword) {
+      throw new Error("Passwords do not match");
+    }
 
     if (password.length < 6) {
       throw new Error("Password must be at least 6 characters long");
@@ -61,7 +64,7 @@ class UserService {
     await user.save();
 
     // Generate JWT Token
-    const token = this.generateToken(user._id, user.role);
+    const token = this.generateToken(user._id, user.role, user.email);
 
     return {
       success: true,
@@ -108,7 +111,7 @@ class UserService {
     }
 
     // Generate JWT Token
-    const token = this.generateToken(user._id, user.role);
+    const token = this.generateToken(user._id, user.role, user.email);
 
     return {
       success: true,

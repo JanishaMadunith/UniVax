@@ -1,6 +1,7 @@
 const AppointmentService = require("../../Services/Appointment/AppointmentService");
 const ClinicService = require("../../Services/Appointment/ClinicService");
 const { validateAppointmentSchedule } = require("../../Services/Appointment/AppointmentScheduleValidation");
+const { sendAppointmentConfirmation } = require("../../Services/emailService");
 
 // Create Appointment
 const createAppointment = async (req, res, next) => {
@@ -68,6 +69,12 @@ const createAppointment = async (req, res, next) => {
             appointmentDate,
             appointmentTime
         });
+
+        // Send confirmation email to patient (non-blocking)
+        const clinicName = clinicResult.clinic.clinicName || 'Clinic';
+        sendAppointmentConfirmation(result.appointment, clinicName).catch(err =>
+            console.error('Appointment email error:', err.message)
+        );
 
         res.status(201).json(result);
 

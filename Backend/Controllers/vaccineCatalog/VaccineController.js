@@ -1,11 +1,20 @@
 const vaccineService = require('../../Services/vaccineCatalog/VaccineService');
 const doseService = require('../../Services/vaccineCatalog/DoseService');
+const { sendNewVaccineNotification } = require('../../Services/emailService');
 
 // @desc    CREATE a new vaccine
 // @route   POST /api/vaccines
 exports.createVaccine = async (req, res) => {
   try {
     const result = await vaccineService.createVaccine(req.body, req.user?.id);
+
+    // Send email notification to the creator (non-blocking)
+    if (req.user && req.user.email && result.data) {
+      sendNewVaccineNotification(result.data, req.user.email).catch(err =>
+        console.error('New vaccine email error:', err.message)
+      );
+    }
+
     res.status(201).json(result);
   } catch (error) {
     res.status(error.status || 500).json({

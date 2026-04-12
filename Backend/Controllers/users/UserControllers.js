@@ -30,6 +30,15 @@ const loginUser = async (req, res, next) => {
         res.status(200).json(result);
     } catch (error) {
         console.error("Login error:", error);
+        
+        // Return 400 for validation errors (missing fields)
+        if (error.message === 'Email and password are required') {
+            return res.status(400).json({ 
+                success: false,
+                message: error.message 
+            });
+        }
+        
         res.status(401).json({ 
             success: false,
             message: error.message 
@@ -85,7 +94,12 @@ const updateUser = async (req, res, next) => {
                 message: "Invalid user ID format" 
             });
         }
-        
+        if (error.message === "User not found") {
+            return res.status(404).json({ 
+                success: false,
+                message: error.message 
+            });
+        }
         res.status(400).json({ 
             success: false,
             message: error.message 
@@ -133,7 +147,12 @@ const deleteUser = async (req, res, next) => {
                 message: "Invalid user ID format" 
             });
         }
-        
+        if (error.message === "User not found") {
+            return res.status(404).json({ 
+                success: false,
+                message: error.message 
+            });
+        }
         res.status(400).json({ 
             success: false,
             message: error.message 
